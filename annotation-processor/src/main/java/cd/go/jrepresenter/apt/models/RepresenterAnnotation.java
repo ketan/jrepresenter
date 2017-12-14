@@ -46,7 +46,7 @@ public class RepresenterAnnotation {
     }
 
     protected String packageNameRelocated() {
-        return getModelClass().packageName() + PACKAGE_NAME_SUFFIX;
+        return getRepresenterClass().packageName() + PACKAGE_NAME_SUFFIX;
     }
 
     String mapperClassImplSimpleName() {
