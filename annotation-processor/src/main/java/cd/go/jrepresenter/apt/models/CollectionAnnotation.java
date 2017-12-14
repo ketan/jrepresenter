@@ -18,8 +18,10 @@ package cd.go.jrepresenter.apt.models;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
 
 import java.util.List;
+import java.util.Map;
 
 public class CollectionAnnotation extends BaseAnnotation {
 
@@ -40,9 +42,10 @@ public class CollectionAnnotation extends BaseAnnotation {
     @Override
     public CodeBlock getDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
         ClassName mapperClass = classToAnnotationMap.representerForClass(representerClassName).mapperClassImplRelocated();
+        ParameterizedTypeName listOfMaps = ParameterizedTypeName.get(List.class, Map.class);
         return CodeBlock.builder()
                 .beginControlFlow("if (json.containsKey($S))", jsonAttribute.name)
-                .addStatement("model.$N($T.fromJson((List) json.get($S)))", modelAttributeSetter(), mapperClass, jsonAttribute.name)
+                .addStatement("model.$N($T.fromJSON(($T) json.get($S)))", modelAttributeSetter(), mapperClass, listOfMaps, jsonAttribute.name)
                 .endControlFlow()
                 .build();
     }

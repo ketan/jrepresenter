@@ -62,7 +62,7 @@ public class CollectionAnnotationTest {
 
         String expectedCode = "" +
                 "if (json.containsKey(\"users\")) {\n" +
-                "  model.setUsersInternal(com.foo.gen.UserMapper.fromJson((List) json.get(\"users\")));\n" +
+                "  model.setUsersInternal(com.foo.gen.UserMapper.fromJSON((java.util.List<java.util.Map>) json.get(\"users\")));\n" +
                 "}\n";
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
     }

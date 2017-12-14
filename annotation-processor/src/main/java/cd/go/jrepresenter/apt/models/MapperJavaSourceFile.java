@@ -41,7 +41,9 @@ public class MapperJavaSourceFile {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(representerAnnotation.mapperClassImplSimpleName())
                 .addModifiers(Modifier.PUBLIC)
                 .addMethod(toJsonMethod())
-                .addMethod(toJsonCollectionMethod());
+                .addMethod(toJsonCollectionMethod())
+                .addMethod(fromJsonMethod())
+                .addMethod(fromJsonCollectionMethod());
 
         if (representerAnnotation.hasLinksProvider()) {
             classBuilder.addField(FieldSpec.builder(
@@ -68,6 +70,22 @@ public class MapperJavaSourceFile {
 
     }
 
+    private MethodSpec fromJsonCollectionMethod() {
+        ParameterizedTypeName listOfMaps = ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(Map.class));
+        ParameterizedTypeName listOfModels = ParameterizedTypeName.get(ClassName.get(List.class), representerAnnotation.getModelClass());
+        return MethodSpec.methodBuilder("fromJSON")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(listOfMaps, "jsonArray")
+                .returns(listOfModels)
+                .addCode(
+                        CodeBlock.builder()
+                                .addStatement("return jsonArray.stream().map(eachItem -> $T.fromJSON(eachItem)).collect($T.toList())", representerAnnotation.mapperClassImplRelocated(), Collectors.class)
+                                .build()
+                )
+                .build();
+
+    }
+
     private MethodSpec toJsonMethod() {
         return MethodSpec.methodBuilder("toJSON")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -83,6 +101,21 @@ public class MapperJavaSourceFile {
                 )
                 .build();
 
+    }
+
+    private MethodSpec fromJsonMethod() {
+        return MethodSpec.methodBuilder("fromJSON")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(Map.class, "json")
+                .returns(representerAnnotation.getModelClass())
+                .addCode(
+                        CodeBlock.builder()
+                                .addStatement("$T model = new $T()", representerAnnotation.getModelClass(), representerAnnotation.getModelClass())
+                                .add(deserializeInternal())
+                                .addStatement("return model")
+                                .build()
+                )
+                .build();
     }
 
     private CodeBlock serializeInternal() {
@@ -110,6 +143,14 @@ public class MapperJavaSourceFile {
         }
 
         return serializeInternalBuilder.build();
+    }
+
+    private CodeBlock deserializeInternal() {
+        CodeBlock.Builder deserializeInternalBuilder = CodeBlock.builder();
+        context.getAnnotationsOn(representerAnnotation).forEach(baseAnnotation -> {
+            deserializeInternalBuilder.add(baseAnnotation.getDeserializeCodeBlock(context));
+        });
+        return deserializeInternalBuilder.build();
     }
 
 }

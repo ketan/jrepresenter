@@ -28,7 +28,7 @@ public class MapperJavaSourceFileTest {
     @Test
     public void shouldSerializeSimpleObjectProperties() throws Exception {
         RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
-        Attribute modelAttribute = new Attribute("fname", ClassName.bestGuess("com.tw.CaseInsensitiveString"));
+        Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
         ClassToAnnotationMap context = new ClassToAnnotationMap();
@@ -41,6 +41,7 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
+                "import java.lang.String;\n" +
                 "import java.util.LinkedHashMap;\n" +
                 "import java.util.List;\n" +
                 "import java.util.Map;\n" +
@@ -56,13 +57,26 @@ public class MapperJavaSourceFileTest {
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
+                "\n" +
+                "  public static User fromJSON(Map json) {\n" +
+                "    User model = new User();\n" +
+                "    if (json.containsKey(\"firstName\")) {\n" +
+                "      model.setFname((String) json.get(\"firstName\"));\n" +
+                "    }\n" +
+                "    return model;\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
+                "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
+                "  }" +
+                "\n" +
                 "}\n");
     }
 
     @Test
     public void shouldSerializeSimpleObjectPropertiesAsEmbedded() throws Exception {
         RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
-        Attribute modelAttribute = new Attribute("fname", ClassName.bestGuess("com.tw.CaseInsensitiveString"));
+        Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
         propertyAnnotation.setEmbedded(true);
@@ -76,6 +90,7 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
+                "import java.lang.String;\n" +
                 "import java.util.LinkedHashMap;\n" +
                 "import java.util.List;\n" +
                 "import java.util.Map;\n" +
@@ -92,6 +107,18 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
+                "  }\n" +
+                "\n" +
+                "  public static User fromJSON(Map json) {\n" +
+                "    User model = new User();\n" +
+                "    if (json.containsKey(\"firstName\")) {\n" +
+                "      model.setFname((String) json.get(\"firstName\"));\n" +
+                "    }\n" +
+                "    return model;\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
+                "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
     }
