@@ -36,12 +36,16 @@ public class PipelineGroup {
         return name;
     }
 
+    public void setName(CaseInsensitiveString name) {
+        this.name = name;
+    }
+
     public List<Pipeline> getPipelines() {
         return pipelines;
     }
 
-    public void setName(CaseInsensitiveString name) {
-        this.name = name;
+    public void setPipelines(List<Pipeline> pipelines) {
+        this.pipelines = pipelines;
     }
 
     public CaseInsensitiveString getPermissions() {
@@ -50,10 +54,6 @@ public class PipelineGroup {
 
     public void setPermissions(CaseInsensitiveString permissions) {
         this.permissions = permissions;
-    }
-
-    public void setPipelines(List<Pipeline> pipelines) {
-        this.pipelines = pipelines;
     }
 
     @Override

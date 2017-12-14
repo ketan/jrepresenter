@@ -14,16 +14,87 @@
  * limitations under the License.
  */
 
-group 'cd.go.jrepresenter'
-version '0.0.1'
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+    classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.11.0'
+  }
+}
+
+apply plugin: 'io.codearte.nexus-staging'
+
+def gitRevision = { ->
+  def hashStdOut = new ByteArrayOutputStream()
+  exec {
+    commandLine "git", "log", "-n", "1", "--format=%H"
+    standardOutput = hashStdOut
+  }
+
+  return hashStdOut.toString().trim()
+}
+
+def releaseRevision = { ->
+  def hashStdOut = new ByteArrayOutputStream()
+  exec {
+    commandLine "git", "rev-list", "--count", "HEAD"
+    standardOutput = hashStdOut
+  }
+
+  return hashStdOut.size().toString()
+}
+
+def DIST_VERSION = releaseRevision()
+def VERSION = '0.0.1'
+
+rootProject.ext.gitRevision = gitRevision()
+
+allprojects {
+  group 'cd.go.jrepresenter'
+  version DIST_VERSION ? "${VERSION}-${DIST_VERSION}" : VERSION
+}
 
 subprojects {
-    apply plugin: 'java'
+  apply plugin: 'java'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
-    repositories {
-        mavenCentral()
+  repositories {
+    jcenter()
+    mavenLocal()
+  }
+
+  tasks.withType(JavaCompile) { compileTask ->
+    options.encoding = "UTF-8"
+  }
+
+  tasks.withType(AbstractArchiveTask) {
+    includeEmptyDirs false
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+  }
+
+  tasks.withType(Jar) {
+    manifest {
+      attributes(
+        'Go-Version': project.version,
+        'ImplementationVersion': project.version,
+        'Go-Revision': project.gitRevision,
+        'Implementation-Title': project.name,
+        'Implementation-Version': project.version,
+        'Source-Compatibility': project.sourceCompatibility,
+        'Target-Compatibility': project.targetCompatibility
+      )
     }
+
+    from(project.projectDir) {
+      include 'LICENSE'
+      into 'META-INF'
+    }
+  }
 }

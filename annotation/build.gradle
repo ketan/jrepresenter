@@ -14,3 +14,6 @@
  * limitations under the License.
  */
 
+apply from: "${rootProject.projectDir}/gradle/publish.gradle"
+
+description = "Annotation based JSON serializers for GoCD API. Contains the annotation API."

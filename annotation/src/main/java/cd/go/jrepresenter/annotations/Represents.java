@@ -24,5 +24,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Represents {
     Class<?> value();
+
     Class<?> linksBuilder() default EmptyLinksProvider.class;
 }

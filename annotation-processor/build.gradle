@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile project(':annotation')
-    compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc3'
-    compile group: 'com.squareup', name: 'javapoet', version: '1.9.0'
+apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.8.0'
+description = "Annotation based JSON serializers for GoCD API. Contains the annotation processor."
+
+dependencies {
+  compile project(':annotation')
+  compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc3'
+  compile group: 'com.squareup', name: 'javapoet', version: '1.9.0'
+
+  testCompile group: 'junit', name: 'junit', version: '4.12'
+  testCompile group: 'org.assertj', name: 'assertj-core', version: '3.8.0'
 }
