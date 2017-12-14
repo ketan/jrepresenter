@@ -16,19 +16,21 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import com.google.common.base.CaseFormat;
 import com.squareup.javapoet.TypeName;
+import org.junit.Test;
 
-public class Attribute {
-    protected final String name;
-    protected final TypeName type;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-    public Attribute(String name, TypeName type) {
-        this.name = name;
-        this.type = type;
-    }
 
-    public String nameAsSnakeCase() {
-        return CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, name);
+public class AttributeTest {
+
+    @Test
+    public void shouldGetNameAsSnakeCase() {
+        Attribute attribute = new Attribute("pipelineId", TypeName.INT);
+        assertThat(attribute.nameAsSnakeCase()).isEqualTo("pipeline_id");
+
+        //acronyms aren't supported by guava
+        attribute = new Attribute("foobarDAO", TypeName.INT);
+        assertThat(attribute.nameAsSnakeCase()).isEqualTo("foobar_d_a_o");
     }
 }

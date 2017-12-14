@@ -33,7 +33,7 @@ public class PropertyAnnotationTest {
         Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"firstName\", value.getFname());\n");
+        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"first_name\", value.getFname());\n");
     }
 
     @Test
@@ -42,7 +42,7 @@ public class PropertyAnnotationTest {
         Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, ClassName.bestGuess("com.tw.CaseInsensitiveStringSerializer"), null);
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"firstName\", new com.tw.CaseInsensitiveStringSerializer().apply(value.getFname()));\n");
+        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"first_name\", new com.tw.CaseInsensitiveStringSerializer().apply(value.getFname()));\n");
     }
 
     @Test
@@ -52,8 +52,8 @@ public class PropertyAnnotationTest {
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
         CodeBlock codeBlock = propertyAnnotation.getDeserializeCodeBlock(null);
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"firstName\")) {\n" +
-                "  model.setFname((java.lang.String) json.get(\"firstName\"));\n" +
+                "if (json.containsKey(\"first_name\")) {\n" +
+                "  model.setFname((java.lang.String) json.get(\"first_name\"));\n" +
                 "}\n");
     }
 
@@ -76,8 +76,8 @@ public class PropertyAnnotationTest {
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, ClassName.bestGuess("com.tw.CaseInsensitiveStringDeserializer"));
         CodeBlock codeBlock = propertyAnnotation.getDeserializeCodeBlock(null);
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"firstName\")) {\n" +
-                "  model.setFname(new com.tw.CaseInsensitiveStringDeserializer().apply((java.lang.String) json.get(\"firstName\")));\n" +
+                "if (json.containsKey(\"first_name\")) {\n" +
+                "  model.setFname(new com.tw.CaseInsensitiveStringDeserializer().apply((java.lang.String) json.get(\"first_name\")));\n" +
                 "}\n");
     }
 }

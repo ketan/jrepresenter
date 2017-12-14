@@ -16,9 +16,8 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import cd.go.jrepresenter.EmptyLinksProvider;
+import com.squareup.javapoet.TypeName;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +49,7 @@ public class MapperJavaSourceFileTest {
                 "public class UserMapper {\n" +
                 "  public static Map toJSON(User value, RequestContext requestContext) {\n" +
                 "    Map json = new LinkedHashMap();\n" +
-                "    json.put(\"firstName\", value.getFname());\n" +
+                "    json.put(\"first_name\", value.getFname());\n" +
                 "    return json;\n" +
                 "  }\n" +
                 "\n" +
@@ -60,8 +59,8 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "  public static User fromJSON(Map json) {\n" +
                 "    User model = new User();\n" +
-                "    if (json.containsKey(\"firstName\")) {\n" +
-                "      model.setFname((String) json.get(\"firstName\"));\n" +
+                "    if (json.containsKey(\"first_name\")) {\n" +
+                "      model.setFname((String) json.get(\"first_name\"));\n" +
                 "    }\n" +
                 "    return model;\n" +
                 "  }\n" +
@@ -100,7 +99,7 @@ public class MapperJavaSourceFileTest {
                 "  public static Map toJSON(User value, RequestContext requestContext) {\n" +
                 "    Map json = new LinkedHashMap();\n" +
                 "    Map embeddedMap = new LinkedHashMap();\n" +
-                "    embeddedMap.put(\"firstName\", value.getFname());\n" +
+                "    embeddedMap.put(\"first_name\", value.getFname());\n" +
                 "    json.put(\"_embedded\", embeddedMap);\n" +
                 "    return json;\n" +
                 "  }\n" +
@@ -111,8 +110,8 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "  public static User fromJSON(Map json) {\n" +
                 "    User model = new User();\n" +
-                "    if (json.containsKey(\"firstName\")) {\n" +
-                "      model.setFname((String) json.get(\"firstName\"));\n" +
+                "    if (json.containsKey(\"first_name\")) {\n" +
+                "      model.setFname((String) json.get(\"first_name\"));\n" +
                 "    }\n" +
                 "    return model;\n" +
                 "  }\n" +
