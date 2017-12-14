@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-rootProject.name = 'spike'
+rootProject.name = 'jrepresenter'
 
 include 'annotation'
 include 'annotation-processor'

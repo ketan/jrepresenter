@@ -35,12 +35,12 @@ public class Pipeline {
         return name;
     }
 
-    public List<Stage> getStages() {
-        return stages;
-    }
-
     public void setName(CaseInsensitiveString name) {
         this.name = name;
+    }
+
+    public List<Stage> getStages() {
+        return stages;
     }
 
     public void setStages(List<Stage> stages) {

@@ -47,12 +47,12 @@ public abstract class BaseAnnotation {
         this.parent = parent;
     }
 
-    public void setEmbedded(boolean embedded) {
-        this.embedded = embedded;
-    }
-
     public boolean isEmbedded() {
         return embedded;
+    }
+
+    public void setEmbedded(boolean embedded) {
+        this.embedded = embedded;
     }
 
 }

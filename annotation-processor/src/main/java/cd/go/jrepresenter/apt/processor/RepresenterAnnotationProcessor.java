@@ -85,7 +85,7 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
             String representerClassName = getRepresenterClassName(annotation);
 
             TypeName modelAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
-            TypeName jsonAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());;
+            TypeName jsonAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
 
             Attribute modelAttribute = new Attribute(modelAttributeName, modelAttributeType);
             Attribute jsonAttribute = new Attribute(jsonAttributeName, jsonAttributeType);

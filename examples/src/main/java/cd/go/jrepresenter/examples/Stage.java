@@ -39,20 +39,20 @@ public class Stage {
         return name;
     }
 
-    public Timestamp getCreatedTime() {
-        return createdTime;
-    }
-
-    public StageState getState() {
-        return state;
-    }
-
     public void setName(CaseInsensitiveString name) {
         this.name = name;
     }
 
+    public Timestamp getCreatedTime() {
+        return createdTime;
+    }
+
     public void setCreatedTime(Timestamp createdTime) {
         this.createdTime = createdTime;
+    }
+
+    public StageState getState() {
+        return state;
     }
 
     public void setState(StageState state) {
