@@ -17,14 +17,20 @@
 buildscript {
   repositories {
     jcenter()
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
   }
+
   dependencies {
     classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
     classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.11.0'
+    classpath 'gradle.plugin.co.riiid:gradle-github-plugin:0.4.2'
   }
 }
 
 apply plugin: 'io.codearte.nexus-staging'
+apply plugin: 'co.riiid.gradle'
 
 def gitRevision = { ->
   def hashStdOut = new ByteArrayOutputStream()
@@ -97,4 +103,17 @@ subprojects {
       into 'META-INF'
     }
   }
+}
+
+github { github ->
+  owner = System.getenv('GITHUB_USER') ?: 'bob'
+  repo = 'jrepresenter'
+  token = System.getenv('GITHUB_TOKEN') ?: 'bad-token'
+  tagName = VERSION
+  name = VERSION
+  targetCommitish = project.gitRevision
+  body = """
+      # Version ${project.version}
+      See release notes at https://github.com/${github.owner}/${github.repo}/blob/master/CHANGELOG.md#${github.tagName.replaceAll(/[^A-Za-z0-9]/, '')}
+    """.stripIndent().trim()
 }
