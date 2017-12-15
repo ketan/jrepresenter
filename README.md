@@ -6,6 +6,8 @@
 
 ## Publishing to maven central
 
+> **Note:** On the build systems, these properties are setup in `$HOME/.gradle/gradle.properties` using docker swarm secrets.
+
 * build the jars and create a staging repository
   `./gradlew clean signArchives uploadArchives -Psigning.keyId=8816C449 -Psigning.password=... -Psigning.secretKeyRingFile=$HOME/.gnupg/secring.gpg -PnexusUsername=... -PnexusPassword=...`
   

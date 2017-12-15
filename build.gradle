@@ -39,11 +39,11 @@ def gitRevision = { ->
 def releaseRevision = { ->
   def hashStdOut = new ByteArrayOutputStream()
   exec {
-    commandLine "git", "rev-list", "--count", "HEAD"
+    commandLine "git", "log", "--pretty=format:"
     standardOutput = hashStdOut
   }
 
-  return hashStdOut.size().toString()
+  return hashStdOut.size().toString().toInteger() + 1
 }
 
 def DIST_VERSION = releaseRevision()
