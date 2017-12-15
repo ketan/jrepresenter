@@ -4,6 +4,14 @@
 
 `./gradlew clean jar test`
 
+## Publishing to maven central
+
+* build the jars and create a staging repository
+  `./gradlew clean signArchives uploadArchives -Psigning.keyId=8816C449 -Psigning.password=... -Psigning.secretKeyRingFile=$HOME/.gnupg/secring.gpg -PnexusUsername=... -PnexusPassword=...`
+  
+* close and release the staging repository
+  `./gradlew closeAndReleaseRepository -Psigning.keyId=8816C449 -Psigning.password=... -Psigning.secretKeyRingFile=$HOME/.gnupg/secring.gpg -PnexusUsername=... -PnexusPassword=...`
+
 ## Examples
 
 See examples in the examples directory.

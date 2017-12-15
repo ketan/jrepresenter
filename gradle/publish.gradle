@@ -59,5 +59,11 @@ modifyPom {
 }
 
 nexusStaging {
-  packageGroup = rootProject.group
+  packageGroup = 'cd.go'
+
+  /* To get the staging id, you can either:
+    - Use the 'getStagingProfile' task added by the 'io.codearte.nexus-staging' plugin
+    - Log-in on sonatype.org, go to staging profile, select `cd.go`, id = last part of URL */
+
+//  stagingProfileId = '8f73aacb1d399b'
 }
