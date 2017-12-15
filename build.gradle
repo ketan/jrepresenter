@@ -105,15 +105,25 @@ subprojects {
   }
 }
 
-github { github ->
-  owner = System.getenv('GITHUB_USER') ?: 'bob'
+github {
   repo = 'jrepresenter'
-  token = System.getenv('GITHUB_TOKEN') ?: 'bad-token'
+
+  if (project.hasProperty('githubOwner')) {
+    owner = project.githubOwner
+  }
+
+  if (project.hasProperty('githubToken')) {
+    token = project.githubToken
+  }
+
+
   tagName = VERSION
   name = VERSION
   targetCommitish = project.gitRevision
   body = """
       # Version ${project.version}
-      See release notes at https://github.com/${github.owner}/${github.repo}/blob/master/CHANGELOG.md#${github.tagName.replaceAll(/[^A-Za-z0-9]/, '')}
+      See release notes at https://github.com/${github.owner}/${github.repo}/blob/master/CHANGELOG.md#${
+    github.tagName.replaceAll(/[^A-Za-z0-9]/, '')
+  }
     """.stripIndent().trim()
 }
