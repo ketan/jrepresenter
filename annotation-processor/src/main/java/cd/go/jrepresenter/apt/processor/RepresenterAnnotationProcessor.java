@@ -55,9 +55,11 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
         ClassToAnnotationMap classToAnnotationMap = new ClassToAnnotationMap();
 
         roundEnv.getElementsAnnotatedWith(Represents.class).forEach(representerClass -> {
-            String modelClassName = representedModel(representerClass);
-            String linksBuilderClassName = linksBuilderClass(representerClass);
-            classToAnnotationMap.add(new RepresenterAnnotation(representerClass.toString(), modelClassName, linksBuilderClassName));
+            Represents represents = representerClass.getAnnotation(Represents.class);
+            String modelClassName = representedModel(represents);
+            String linksBuilderClassName = linksBuilderClass(represents);
+            classToAnnotationMap.add(new RepresenterAnnotation(representerClass.toString(), modelClassName,
+                    linksBuilderClassName, represents.skipSerialize(), represents.skipDeserialize()));
         });
 
         roundEnv.getElementsAnnotatedWith(Property.class).forEach(method -> {
@@ -159,8 +161,7 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
         return className;
     }
 
-    private String representedModel(Element representerClass) {
-        Represents representsAnnotation = representerClass.getAnnotation(Represents.class);
+    private String representedModel(Represents representsAnnotation) {
         String modelClassName;
         try {
             Class<?> clazz = representsAnnotation.value();
@@ -173,8 +174,7 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
         return modelClassName;
     }
 
-    private String linksBuilderClass(Element representerClass) {
-        Represents representsAnnotation = representerClass.getAnnotation(Represents.class);
+    private String linksBuilderClass(Represents representsAnnotation) {
         String linksBuilderClassName;
         try {
             Class<?> clazz = representsAnnotation.linksBuilder();

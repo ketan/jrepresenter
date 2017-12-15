@@ -26,4 +26,8 @@ public @interface Represents {
     Class<?> value();
 
     Class<?> linksBuilder() default EmptyLinksProvider.class;
+
+    boolean skipSerialize() default false;
+
+    boolean skipDeserialize() default false;
 }

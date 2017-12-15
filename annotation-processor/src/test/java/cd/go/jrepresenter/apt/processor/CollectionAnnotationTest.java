@@ -34,7 +34,7 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerialize() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
         Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = new CollectionAnnotation("com.foo.UserRepresenter", modelAttribute, jsonAttribute);
@@ -50,7 +50,7 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToDeserialize() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
         Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = new CollectionAnnotation("com.foo.UserRepresenter", modelAttribute, jsonAttribute);

@@ -26,7 +26,7 @@ public class RepresenterAnnotationTest {
 
     @Test
     public void shouldRelocateSourceFiles() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
 
 
         assertThat(representerAnnotation.getRepresenterClass()).isEqualTo(ClassName.bestGuess("com.foo.UserRepresenter"));

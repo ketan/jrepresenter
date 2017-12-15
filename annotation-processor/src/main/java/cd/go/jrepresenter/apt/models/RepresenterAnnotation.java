@@ -26,11 +26,15 @@ public class RepresenterAnnotation {
     private final ClassName representerClass;
     private final ClassName modelClass;
     private final ClassName linksBuilderClass;
+    private final boolean skipSerialize;
+    private final boolean skipDeserialize;
 
-    public RepresenterAnnotation(String representerClass, String modelClass, String linksBuilderClass) {
+    public RepresenterAnnotation(String representerClass, String modelClass, String linksBuilderClass, boolean skipSerialize, boolean skipDeserialize) {
         this.representerClass = ClassName.bestGuess(representerClass);
         this.modelClass = ClassName.bestGuess(modelClass);
         this.linksBuilderClass = ClassName.bestGuess(linksBuilderClass);
+        this.skipSerialize = skipSerialize;
+        this.skipDeserialize = skipDeserialize;
     }
 
     public ClassName getRepresenterClass() {
@@ -43,6 +47,14 @@ public class RepresenterAnnotation {
 
     public ClassName getLinksBuilderClass() {
         return linksBuilderClass;
+    }
+
+    public boolean shouldSkipSerialize() {
+        return skipSerialize;
+    }
+
+    public boolean shouldSkipDeserialize() {
+        return skipDeserialize;
     }
 
     protected String packageNameRelocated() {

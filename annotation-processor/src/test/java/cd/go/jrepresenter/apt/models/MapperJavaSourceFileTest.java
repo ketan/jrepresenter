@@ -26,7 +26,7 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectProperties() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
@@ -74,7 +74,7 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectPropertiesAsEmbedded() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName());
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
         PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
@@ -118,6 +118,75 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
                 "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    @Test
+    public void shouldSkipSerializeIfSpecified() {
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), true, false);
+        Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
+        Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
+        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
+        ClassToAnnotationMap context = new ClassToAnnotationMap();
+        context.add(representerAnnotation);
+        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
+
+        assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
+                "package com.foo.gen;\n" +
+                "\n" +
+                "import com.foo.User;\n" +
+                "import java.lang.String;\n" +
+                "import java.util.List;\n" +
+                "import java.util.Map;\n" +
+                "import java.util.stream.Collectors;\n" +
+                "\n" +
+                "public class UserMapper {\n" +
+                "  public static User fromJSON(Map json) {\n" +
+                "    User model = new User();\n" +
+                "    if (json.containsKey(\"first_name\")) {\n" +
+                "      model.setFname((String) json.get(\"first_name\"));\n" +
+                "    }\n" +
+                "    return model;\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
+                "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    @Test
+    public void shouldSkipDeserializeIfSpecified() {
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, true);
+        Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
+        Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
+        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
+        ClassToAnnotationMap context = new ClassToAnnotationMap();
+        context.add(representerAnnotation);
+        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
+
+        assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
+                "package com.foo.gen;\n" +
+                "\n" +
+                "import cd.go.jrepresenter.RequestContext;\n" +
+                "import com.foo.User;\n" +
+                "import java.util.LinkedHashMap;\n" +
+                "import java.util.List;\n" +
+                "import java.util.Map;\n" +
+                "import java.util.stream.Collectors;\n" +
+                "\n" +
+                "public class UserMapper {\n" +
+                "  public static Map toJSON(User value, RequestContext requestContext) {\n" +
+                "    Map json = new LinkedHashMap();\n" +
+                "    json.put(\"first_name\", value.getFname());\n" +
+                "    return json;\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
+                "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
     }

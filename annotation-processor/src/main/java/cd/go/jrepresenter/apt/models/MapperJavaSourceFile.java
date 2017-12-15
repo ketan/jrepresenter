@@ -39,11 +39,19 @@ public class MapperJavaSourceFile {
 
     public String toSource() {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(representerAnnotation.mapperClassImplSimpleName())
-                .addModifiers(Modifier.PUBLIC)
-                .addMethod(toJsonMethod())
-                .addMethod(toJsonCollectionMethod())
-                .addMethod(fromJsonMethod())
-                .addMethod(fromJsonCollectionMethod());
+                .addModifiers(Modifier.PUBLIC);
+
+        if (!representerAnnotation.shouldSkipSerialize()) {
+            classBuilder
+                    .addMethod(toJsonMethod())
+                    .addMethod(toJsonCollectionMethod());
+        }
+
+        if (!representerAnnotation.shouldSkipDeserialize()) {
+            classBuilder
+                    .addMethod(fromJsonMethod())
+                    .addMethod(fromJsonCollectionMethod());
+        }
 
         if (representerAnnotation.hasLinksProvider()) {
             classBuilder.addField(FieldSpec.builder(
