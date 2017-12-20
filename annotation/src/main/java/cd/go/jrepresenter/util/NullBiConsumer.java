@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-package cd.go.jrepresenter.examples.representers;
+package cd.go.jrepresenter.util;
 
-public interface UrlBuilder {
+import java.util.function.BiConsumer;
+
+public class NullBiConsumer implements BiConsumer {
+
+    @Override
+    public void accept(Object o, Object o2) {
+    }
 }

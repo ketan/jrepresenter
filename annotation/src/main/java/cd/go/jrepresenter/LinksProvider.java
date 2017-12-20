@@ -16,9 +16,6 @@
 
 package cd.go.jrepresenter;
 
-import cd.go.jrepresenter.Link;
-import cd.go.jrepresenter.RequestContext;
-
 import java.util.List;
 
 public interface LinksProvider<T> {

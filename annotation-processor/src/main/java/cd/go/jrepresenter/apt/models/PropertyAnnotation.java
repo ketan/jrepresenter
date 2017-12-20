@@ -16,63 +16,67 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import cd.go.jrepresenter.annotations.Property;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 
 public class PropertyAnnotation extends BaseAnnotation {
-
-    private static final ClassName NULL_FUNCTION = ClassName.get(Property.NullFunction.class);
-
-    private final TypeName serializerClassName;
-    private final TypeName deserializerClassName;
-
     public PropertyAnnotation(Attribute modelAttribute, Attribute jsonAttribute,
-                              TypeName serializerClassName, TypeName deserializerClassName) {
-        super(modelAttribute, jsonAttribute);
-        this.serializerClassName = serializerClassName == null ? NULL_FUNCTION : serializerClassName;
-        this.deserializerClassName = deserializerClassName == null ? NULL_FUNCTION : deserializerClassName;
+                              TypeName serializerClassName, TypeName deserializerClassName, TypeName representerClassName,
+                              TypeName getterClassName, TypeName setterClassName, TypeName skipParse, TypeName skipRender) {
+        super(modelAttribute, jsonAttribute, representerClassName, serializerClassName, deserializerClassName,
+                getterClassName, setterClassName, skipParse, skipRender);
     }
 
     @Override
-    public CodeBlock getSerializeCodeBlock(ClassToAnnotationMap classToAnnotationMap, String jsonVariableName) {
-        return CodeBlock.builder()
-                .add(serializeStatement(jsonVariableName))
-                .build();
+    protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap classToAnnotationMap, String jsonVariableName) {
+        return putInJson(jsonVariableName,
+                applyRenderRepresenter(classToAnnotationMap,
+                        applySerializer(
+                                applyGetter())));
     }
 
-    private CodeBlock serializeStatement(String jsonVariableName) {
-        if (serializerClassName.equals(NULL_FUNCTION)) {
-            return CodeBlock.builder()
-                    .addStatement("$N.put($S, value.$N())", jsonVariableName, jsonAttribute.nameAsSnakeCase(), modelAttributeGetter())
-                    .build();
+    private CodeBlock applySerializer(CodeBlock valueFromGetter) {
+        if (hasSerializer()) {
+            CodeBlock.Builder builder = CodeBlock.builder();
+            builder.add("new $T().apply(", serializerClassName)
+                    .add(valueFromGetter)
+                    .add(")");
+            return builder.build();
         } else {
-            return CodeBlock.builder()
-                    .addStatement("$N.put($S, new $T().apply(value.$N()))", jsonVariableName, jsonAttribute.nameAsSnakeCase(), serializerClassName, modelAttributeGetter())
-                    .build();
+            return valueFromGetter;
         }
     }
 
     @Override
-    public CodeBlock getDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
+    public CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap context) {
+        CodeBlock deserializeCodeBlock = applySetter(
+                applyParseRepresenter(context,
+                        applyDeserializer(
+                                getValueFromJson())));
         return CodeBlock.builder()
                 .beginControlFlow("if (json.containsKey($S))", jsonAttribute.nameAsSnakeCase())
-                .add(deserializeStatement())
-
+                .add("$[")
+                .add(deserializeCodeBlock)
+                .add(";\n$]")
                 .endControlFlow()
                 .build();
     }
 
-    private CodeBlock deserializeStatement() {
-        if (deserializerClassName.equals(NULL_FUNCTION)) {
+    private CodeBlock getValueFromJson() {
+        return CodeBlock.builder()
+                .add("($T) json.get($S)", jsonAttribute.type, jsonAttribute.nameAsSnakeCase())
+                .build();
+    }
+
+    private CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+        if (hasDeserializer()) {
             return CodeBlock.builder()
-                    .addStatement("model.$N(($T) json.get($S))", modelAttributeSetter(), modelAttribute.type, jsonAttribute.nameAsSnakeCase())
+                    .add("new $T().apply(", deserializerClassName)
+                    .add(valueFromJson)
+                    .add(")")
                     .build();
         } else {
-            return CodeBlock.builder()
-                    .addStatement("model.$N(new $T().apply(($T) json.get($S)))", modelAttributeSetter(), deserializerClassName, jsonAttribute.type, jsonAttribute.nameAsSnakeCase())
-                    .build();
+            return valueFromJson;
         }
     }
 }

@@ -19,6 +19,7 @@ package cd.go.jrepresenter.apt.processor;
 import cd.go.jrepresenter.annotations.Collection;
 import cd.go.jrepresenter.annotations.Property;
 import cd.go.jrepresenter.annotations.Represents;
+import cd.go.jrepresenter.annotations.RepresentsSubClasses;
 import cd.go.jrepresenter.apt.models.*;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
@@ -37,9 +38,14 @@ import javax.lang.model.type.MirroredTypeException;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static javax.tools.Diagnostic.Kind.NOTE;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -56,10 +62,13 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
 
         roundEnv.getElementsAnnotatedWith(Represents.class).forEach(representerClass -> {
             Represents represents = representerClass.getAnnotation(Represents.class);
-            String modelClassName = representedModel(represents);
-            String linksBuilderClassName = linksBuilderClass(represents);
-            classToAnnotationMap.add(new RepresenterAnnotation(representerClass.toString(), modelClassName,
-                    linksBuilderClassName, represents.skipSerialize(), represents.skipDeserialize()));
+            ClassName modelClassName = (ClassName) getClassNameFromAnnotationMethod(represents, "value");
+            ClassName linksBuilderClassName = (ClassName) getClassNameFromAnnotationMethod(represents, "linksProvider");
+            ClassName representerClassName = ClassName.bestGuess(((TypeElement) representerClass).getQualifiedName().toString());
+            RepresentsSubClasses annotation = representerClass.getAnnotation(RepresentsSubClasses.class);
+            Optional<RepresentsSubClassesAnnotation> representsSubClassesAnnotation = extractSubClassInfo(annotation);
+
+            classToAnnotationMap.add(new RepresenterAnnotation(representerClassName, modelClassName, linksBuilderClassName, represents.skipSerialize(), represents.skipDeserialize(), representsSubClassesAnnotation));
         });
 
         roundEnv.getElementsAnnotatedWith(Property.class).forEach(method -> {
@@ -67,15 +76,22 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
 
             String jsonAttributeName = getJsonAttributeName(method);
             String modelAttributeName = getModelAttributeName(method, annotation);
-            TypeName modelAttributeType = getModelAttributeType(annotation);
-            TypeName serializerClassName = getSerializerClassName(annotation);
-            TypeName deserializerClassName = getDeserializerClassName(annotation);
 
+            TypeName modelAttributeType = getClassNameFromAnnotationMethod(annotation, "modelAttributeType");
             TypeName jsonAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
-            //TODO validate(jsonAttributeName);
-            Attribute modelAttribute = new Attribute(modelAttributeName, modelAttributeType);
-            Attribute jsonAttribute = new Attribute(jsonAttributeName, jsonAttributeType);
-            PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, serializerClassName, deserializerClassName);
+
+            PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                    .withModelAttribute(new Attribute(modelAttributeName, modelAttributeType))
+                    .withJsonAttribute(new Attribute(jsonAttributeName, jsonAttributeType))
+                    .withSerializerClassName(getClassNameFromAnnotationMethod(annotation, "serializer"))
+                    .withDeserializerClassName(getClassNameFromAnnotationMethod(annotation, "deserializer"))
+                    .withRepresenterClassName(getClassNameFromAnnotationMethod(annotation, "representer"))
+                    .withGetterClassName(getClassNameFromAnnotationMethod(annotation, "getter"))
+                    .withSetterClassName(getClassNameFromAnnotationMethod(annotation, "setter"))
+                    .withSkipParse(getClassNameFromAnnotationMethod(annotation, "skipParse"))
+                    .withSkipRender(getClassNameFromAnnotationMethod(annotation, "skipRender"))
+                    .build();
+
             classToAnnotationMap.addAnnotatedMethod(ClassName.get(method.getEnclosingElement().asType()), propertyAnnotation);
         });
 
@@ -84,20 +100,64 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
 
             String jsonAttributeName = getJsonAttributeName(method);
             String modelAttributeName = getModelAttributeName(method, annotation);
-            String representerClassName = getRepresenterClassName(annotation);
 
             TypeName modelAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
             TypeName jsonAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
 
-            Attribute modelAttribute = new Attribute(modelAttributeName, modelAttributeType);
-            Attribute jsonAttribute = new Attribute(jsonAttributeName, jsonAttributeType);
-            CollectionAnnotation propertyAnnotation = new CollectionAnnotation(representerClassName, modelAttribute, jsonAttribute);
-            classToAnnotationMap.addAnnotatedMethod(ClassName.bestGuess(method.getEnclosingElement().toString()), propertyAnnotation);
+
+            CollectionAnnotation propertyAnnotation = CollectionAnnotationBuilder.aCollectionAnnotation()
+                    .withRepresenterClassName(getClassNameFromAnnotationMethod(annotation, "representer"))
+                    .withModelAttribute(new Attribute(modelAttributeName, modelAttributeType))
+                    .withJsonAttribute(new Attribute(jsonAttributeName, jsonAttributeType))
+                    .withSerializerClassName(getClassNameFromAnnotationMethod(annotation, "serializer"))
+                    .withDeserializerClassName(getClassNameFromAnnotationMethod(annotation, "deserializer"))
+                    .withGetterClassName(getClassNameFromAnnotationMethod(annotation, "getter"))
+                    .withSetterClassName(getClassNameFromAnnotationMethod(annotation, "setter"))
+                    .withSkipParse(getClassNameFromAnnotationMethod(annotation, "skipParse"))
+                    .withSkipRender(getClassNameFromAnnotationMethod(annotation, "skipRender"))
+                    .build();
+
+            ClassName representerClass = ClassName.bestGuess(method.getEnclosingElement().toString());
+
+            classToAnnotationMap.addAnnotatedMethod(representerClass, propertyAnnotation);
         });
 
         writeFiles(classToAnnotationMap);
 
         return true;
+    }
+
+    private Optional<RepresentsSubClassesAnnotation> extractSubClassInfo(RepresentsSubClasses annotation) {
+        if(annotation == null) {
+            return Optional.empty();
+        }
+        RepresentsSubClasses.SubClassInfo[] subClassInfos = annotation.subClasses();
+        List<SubClassInfoAnnotation> subClassInfoAnnotations = Stream.of(subClassInfos).map(subClassInfo -> {
+            String value = subClassInfo.value();
+            TypeName representer = getClassNameFromAnnotationMethod(subClassInfo, "representer");
+            TypeName linksProvider = getClassNameFromAnnotationMethod(subClassInfo, "linksProvider");
+            return new SubClassInfoAnnotation(representer, value, linksProvider);
+        }).collect(Collectors.toList());
+        return Optional.of(
+                new RepresentsSubClassesAnnotation(annotation.property(), annotation.nestedUnder(), subClassInfoAnnotations));
+    }
+
+    private TypeName getClassNameFromAnnotationMethod(Annotation annotation, String methodName) {
+        try {
+            Method method = annotation.getClass().getMethod(methodName);
+            Class<?> type = (Class<?>) method.invoke(annotation);
+            return TypeName.get(type);
+        } catch (MirroredTypeException mte) {
+            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
+            return TypeName.get(classTypeMirror);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            if (e.getCause() instanceof MirroredTypeException) {
+                DeclaredType classTypeMirror = (DeclaredType) ((MirroredTypeException) e.getCause()).getTypeMirror();
+                return TypeName.get(classTypeMirror);
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private String getJsonAttributeName(Element method) {
@@ -114,77 +174,12 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
     }
 
     private String getModelAttributeName(Element method, Collection annotation) {
-        String modelAttributeName = annotation.attribute();
+        String modelAttributeName = annotation.modelAttributeName();
 
         if (modelAttributeName == null || modelAttributeName.trim().equals("")) {
             modelAttributeName = method.getSimpleName().toString();
         }
         return modelAttributeName;
-    }
-
-    private TypeName getModelAttributeType(Property annotation) {
-        try {
-            return TypeName.get(annotation.modelAttributeType());
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            return TypeName.get(classTypeMirror);
-        }
-    }
-
-    private TypeName getSerializerClassName(Property annotation) {
-        try {
-            return TypeName.get(annotation.serializer());
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            return TypeName.get(classTypeMirror);
-        }
-    }
-
-    private TypeName getDeserializerClassName(Property annotation) {
-        try {
-            return TypeName.get(annotation.deserializer());
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            return TypeName.get(classTypeMirror);
-        }
-    }
-
-    private String getRepresenterClassName(Collection annotation) {
-        String className;
-        try {
-            className = annotation.representer().getName();
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            TypeElement classTypeElement = (TypeElement) classTypeMirror.asElement();
-            className = classTypeElement.getQualifiedName().toString();
-        }
-        return className;
-    }
-
-    private String representedModel(Represents representsAnnotation) {
-        String modelClassName;
-        try {
-            Class<?> clazz = representsAnnotation.value();
-            modelClassName = clazz.getCanonicalName();
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            TypeElement classTypeElement = (TypeElement) classTypeMirror.asElement();
-            modelClassName = classTypeElement.getQualifiedName().toString();
-        }
-        return modelClassName;
-    }
-
-    private String linksBuilderClass(Represents representsAnnotation) {
-        String linksBuilderClassName;
-        try {
-            Class<?> clazz = representsAnnotation.linksBuilder();
-            linksBuilderClassName = clazz.getCanonicalName();
-        } catch (MirroredTypeException mte) {
-            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-            TypeElement classTypeElement = (TypeElement) classTypeMirror.asElement();
-            linksBuilderClassName = classTypeElement.getQualifiedName().toString();
-        }
-        return linksBuilderClassName;
     }
 
     private void writeFiles(ClassToAnnotationMap classToAnnotationMap) {
@@ -199,6 +194,7 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
 
     private void writeMapperFile(ClassToAnnotationMap context, RepresenterAnnotation representerAnnotation) throws IOException {
         MapperJavaSourceFile javaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
+        processingEnv.getMessager().printMessage(NOTE, "Generating representer for " + javaSourceFile.representerAnnotation.getModelClass() + " into " + javaSourceFile.representerAnnotation.mapperClassImplRelocated());
         JavaFileObject builderFile = processingEnv.getFiler().createSourceFile(javaSourceFile.representerAnnotation.mapperClassImplRelocated().toString());
 
         try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {

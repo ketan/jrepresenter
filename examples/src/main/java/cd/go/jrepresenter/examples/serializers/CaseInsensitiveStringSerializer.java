@@ -24,10 +24,6 @@ public class CaseInsensitiveStringSerializer implements Function<CaseInsensitive
 
     @Override
     public String apply(CaseInsensitiveString caseInsensitiveString) {
-        if (caseInsensitiveString != null) {
-            return caseInsensitiveString.toString();
-        } else {
-            return null;
-        }
+        return caseInsensitiveString != null ? caseInsensitiveString.toString() : null;
     }
 }

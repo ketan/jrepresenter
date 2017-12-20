@@ -16,25 +16,35 @@
 
 package cd.go.jrepresenter.annotations;
 
+import cd.go.jrepresenter.util.FalseFunction;
+import cd.go.jrepresenter.util.NullBiConsumer;
+import cd.go.jrepresenter.util.NullFunction;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 @Target(ElementType.METHOD)
 public @interface Property {
     String modelAttributeName() default "";
 
-    Class<?> modelAttributeType();
+    Class<?> modelAttributeType() default Void.class;
 
     Class<? extends Function> serializer() default NullFunction.class;
 
     Class<? extends Function> deserializer() default NullFunction.class;
 
-    class NullFunction implements Function<Object, Object> {
+    Class<? extends Function> getter() default NullFunction.class;
 
-        @Override
-        public Object apply(Object o) {
-            return null;
-        }
-    }
+    Class<? extends BiConsumer> setter() default NullBiConsumer.class;
+
+    boolean embedded() default false;
+
+    Class<?> representer() default Void.class;
+
+    Class<? extends Function> skipParse() default FalseFunction.class;
+
+    Class<? extends Function> skipRender() default FalseFunction.class;
+
 }

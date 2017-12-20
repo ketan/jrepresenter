@@ -19,18 +19,14 @@ package cd.go.jrepresenter.annotations;
 import cd.go.jrepresenter.EmptyLinksProvider;
 import cd.go.jrepresenter.LinksProvider;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+public @interface RepresentsSubClasses {
+    String property();
+    SubClassInfo[] subClasses();
+    String nestedUnder() default "";
 
-@Target(ElementType.TYPE)
-public @interface Represents {
-    Class<?> value();
-
-    Class<? extends LinksProvider> linksProvider() default EmptyLinksProvider.class;
-
-    boolean skipSerialize() default false;
-
-    boolean skipDeserialize() default false;
-
-    boolean codeGen() default true;
+    @interface SubClassInfo {
+        Class<?> representer();
+        Class<? extends LinksProvider> linksProvider() default EmptyLinksProvider.class;
+        String value();
+    }
 }

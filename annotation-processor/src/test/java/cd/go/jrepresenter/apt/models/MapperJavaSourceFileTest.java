@@ -17,6 +17,7 @@
 package cd.go.jrepresenter.apt.models;
 
 import cd.go.jrepresenter.EmptyLinksProvider;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import org.junit.Test;
 
@@ -26,17 +27,20 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectProperties() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
-        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
-        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        context.addAnnotatedMethod("com.foo.representers.UserRepresenter", propertyAnnotation);
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.gen;\n" +
+                "package com.foo.representers.gen;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
@@ -74,18 +78,21 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectPropertiesAsEmbedded() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
-        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
-        propertyAnnotation.setEmbedded(true);
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .withEmbedded(true)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
-        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        context.addAnnotatedMethod("com.foo.representers.UserRepresenter", propertyAnnotation);
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.gen;\n" +
+                "package com.foo.representers.gen;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
@@ -123,18 +130,65 @@ public class MapperJavaSourceFileTest {
     }
 
     @Test
+    public void shouldSerializeComplexObjectPropertiesAsEmbedded() throws Exception {
+        RepresenterAnnotation backupRepresenterAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.BackupRepresenter"), ClassName.bestGuess("com.foo.Backup"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, true);
+        RepresenterAnnotation userRepresenterAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
+
+        Attribute modelAttribute = new Attribute("backedUpBy", ClassName.bestGuess("com.foo.User"));
+        Attribute jsonAttribute = new Attribute("user", null);
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .withRepresenterClassName(userRepresenterAnnotation.getRepresenterClass())
+                .withEmbedded(true)
+                .build();
+        ClassToAnnotationMap context = new ClassToAnnotationMap();
+        context.add(backupRepresenterAnnotation);
+        context.add(userRepresenterAnnotation);
+        context.addAnnotatedMethod(backupRepresenterAnnotation.getRepresenterClass(), propertyAnnotation);
+        MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(backupRepresenterAnnotation, context);
+
+        assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
+                "package com.foo.representers.gen;\n" +
+                "\n" +
+                "import cd.go.jrepresenter.RequestContext;\n" +
+                "import com.foo.Backup;\n" +
+                "import java.util.LinkedHashMap;\n" +
+                "import java.util.List;\n" +
+                "import java.util.Map;\n" +
+                "import java.util.stream.Collectors;\n" +
+                "\n" +
+                "public class BackupMapper {\n" +
+                "  public static Map toJSON(Backup value, RequestContext requestContext) {\n" +
+                "    Map json = new LinkedHashMap();\n" +
+                "    Map embeddedMap = new LinkedHashMap();\n" +
+                "    embeddedMap.put(\"user\", UserMapper.toJSON(value.getBackedUpBy(), requestContext));\n" +
+                "    json.put(\"_embedded\", embeddedMap);\n" +
+                "    return json;\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List toJSON(List<Backup> values, RequestContext requestContext) {\n" +
+                "    return values.stream().map(eachItem -> BackupMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    @Test
     public void shouldSkipSerializeIfSpecified() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), true, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), true, false);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
-        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
-        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        context.addAnnotatedMethod("com.foo.representers.UserRepresenter", propertyAnnotation);
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.gen;\n" +
+                "package com.foo.representers.gen;\n" +
                 "\n" +
                 "import com.foo.User;\n" +
                 "import java.lang.String;\n" +
@@ -159,17 +213,20 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSkipDeserializeIfSpecified() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, true);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, true);
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
-        PropertyAnnotation propertyAnnotation = new PropertyAnnotation(modelAttribute, jsonAttribute, null, null);
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
-        context.addAnnotatedMethod("com.foo.UserRepresenter", propertyAnnotation);
+        context.addAnnotatedMethod("com.foo.representers.UserRepresenter", propertyAnnotation);
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.gen;\n" +
+                "package com.foo.representers.gen;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +

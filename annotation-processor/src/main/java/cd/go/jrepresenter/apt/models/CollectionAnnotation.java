@@ -16,38 +16,77 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CollectionAnnotation extends BaseAnnotation {
 
-    private final ClassName representerClassName;
+    private static final ParameterizedTypeName LIST_OF_MAPS_TYPE = ParameterizedTypeName.get(List.class, Map.class);
 
-    public CollectionAnnotation(String representerClassName, Attribute modelAttribute, Attribute jsonAttribute) {
-        super(modelAttribute, jsonAttribute);
-        this.representerClassName = ClassName.bestGuess(representerClassName);
+    public CollectionAnnotation(Attribute modelAttribute, Attribute jsonAttribute, TypeName representerClassName, TypeName serializerClassName, TypeName deserializerClassName, TypeName getterClassName, TypeName setterClassName, TypeName skipParse, TypeName skipRender) {
+        super(modelAttribute, jsonAttribute, representerClassName, serializerClassName, deserializerClassName, getterClassName, setterClassName, skipParse, skipRender);
     }
 
     @Override
-    public CodeBlock getSerializeCodeBlock(ClassToAnnotationMap context, String jsonVariableName) {
-        return CodeBlock.builder()
-                .addStatement("$N.put($S, $T.toJSON(($T) $N.$N(), requestContext))", jsonVariableName, jsonAttribute.name, context.representerForClass(this.representerClassName).mapperClassImplRelocated(), List.class, "value", modelAttributeGetter())
-                .build();
+    protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap context, String jsonVariableName) {
+        return putInJson(jsonVariableName,
+                applyRenderRepresenter(context,
+                        applySerializer(
+                                applyGetter())));
     }
 
     @Override
-    public CodeBlock getDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
-        ClassName mapperClass = classToAnnotationMap.representerForClass(representerClassName).mapperClassImplRelocated();
-        ParameterizedTypeName listOfMaps = ParameterizedTypeName.get(List.class, Map.class);
+    public CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
+        CodeBlock deserializeCodeBlock = applySetter(
+                applyParseRepresenter(classToAnnotationMap,
+                        applyDeserializer(
+                                getValueFromJson())));
+
         return CodeBlock.builder()
                 .beginControlFlow("if (json.containsKey($S))", jsonAttribute.name)
-                .addStatement("model.$N($T.fromJSON(($T) json.get($S)))", modelAttributeSetter(), mapperClass, listOfMaps, jsonAttribute.name)
+                .add("$[")
+                .add(deserializeCodeBlock)
+                .add(";\n$]")
                 .endControlFlow()
                 .build();
     }
 
+    private CodeBlock applySerializer(CodeBlock valueFromGetter) {
+        if (hasSerializer()) {
+            return CodeBlock.builder()
+                    .add("(")
+                    .add(valueFromGetter)
+                    .add(")")
+                    .add(".stream().map(new $T()::apply).collect($T.toList())",
+                            serializerClassName,
+                            Collectors.class)
+                    .build();
+        } else {
+            return valueFromGetter;
+        }
+    }
+
+    private CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+        if (hasDeserializer()) {
+            return CodeBlock.builder()
+                    .add("(")
+                    .add(valueFromJson)
+                    .add(")")
+                    .add(".stream().map(new $T()::apply).collect($T.toList())", deserializerClassName, Collectors.class)
+                    .build();
+        } else {
+            return valueFromJson;
+        }
+    }
+
+    private CodeBlock getValueFromJson() {
+        return CodeBlock.builder()
+                .add("($T) json.get($S)", jsonAttribute.type, jsonAttribute.nameAsSnakeCase())
+                .build();
+    }
 }

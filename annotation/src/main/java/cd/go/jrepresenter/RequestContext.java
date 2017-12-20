@@ -16,15 +16,26 @@
 
 package cd.go.jrepresenter;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 public class RequestContext {
 
-    String host;
-    String port;
-    String protocol;
+    private final String host;
+    private final int port;
+    private final String protocol;
 
-    public RequestContext(String host, String port, String protocol) {
+    public RequestContext(String protocol, String host, int port) {
         this.host = host;
-        this.port = port;
+        this.port = protocol.equalsIgnoreCase("https") && port == 443 || protocol.equals("http") && port == 80 ? -1 : port;
         this.protocol = protocol;
+    }
+
+    public Link build(String name, String template, Object... args) {
+        try {
+            return new Link(name, new URL(protocol, host, port, String.format(template, args)).toExternalForm());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

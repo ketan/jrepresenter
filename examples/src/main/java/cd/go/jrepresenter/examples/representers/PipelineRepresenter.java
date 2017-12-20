@@ -16,23 +16,24 @@
 
 package cd.go.jrepresenter.examples.representers;
 
-import cd.go.jrepresenter.examples.CaseInsensitiveString;
-import cd.go.jrepresenter.examples.Pipeline;
 import cd.go.jrepresenter.annotations.Collection;
 import cd.go.jrepresenter.annotations.Property;
 import cd.go.jrepresenter.annotations.Represents;
+import cd.go.jrepresenter.examples.CaseInsensitiveString;
+import cd.go.jrepresenter.examples.Pipeline;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringDeserializer;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringSerializer;
 
 import java.util.List;
+import java.util.Map;
 
-@Represents(value = Pipeline.class, linksBuilder = PipelineUrlBuilder.class)
+@Represents(value = Pipeline.class, linksProvider = PipelineUrlBuilder.class)
 public interface PipelineRepresenter {
 
     @Property(serializer = CaseInsensitiveStringSerializer.class, deserializer = CaseInsensitiveStringDeserializer.class, modelAttributeType = CaseInsensitiveString.class)
     public String name();
 
     @Collection(representer = StagesRepresenter.class)
-    public List<Object> stages();
+    public List<Map> stages();
 
 }

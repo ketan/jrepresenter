@@ -19,22 +19,39 @@ package cd.go.jrepresenter.apt.models;
 import com.squareup.javapoet.ClassName;
 import cd.go.jrepresenter.EmptyLinksProvider;
 
+import java.util.Optional;
+
 public class RepresenterAnnotation {
     private static final String MAPPER_CLASS_SUFFIX = "Mapper";
     private static final String PACKAGE_NAME_SUFFIX = ".gen";
 
     private final ClassName representerClass;
     private final ClassName modelClass;
-    private final ClassName linksBuilderClass;
+    private final ClassName linksProviderClass;
     private final boolean skipSerialize;
     private final boolean skipDeserialize;
+    private final Optional<RepresentsSubClassesAnnotation> subClassInfo;
 
-    public RepresenterAnnotation(String representerClass, String modelClass, String linksBuilderClass, boolean skipSerialize, boolean skipDeserialize) {
-        this.representerClass = ClassName.bestGuess(representerClass);
-        this.modelClass = ClassName.bestGuess(modelClass);
-        this.linksBuilderClass = ClassName.bestGuess(linksBuilderClass);
+    public RepresenterAnnotation(ClassName representerClass,
+                                        ClassName modelClass,
+                                        ClassName linksProviderClass,
+                                        boolean skipSerialize,
+                                        boolean skipDeserialize) {
+        this(representerClass, modelClass, linksProviderClass, skipSerialize, skipDeserialize, Optional.empty());
+    }
+
+    public RepresenterAnnotation(ClassName representerClass,
+                                 ClassName modelClass,
+                                 ClassName linksProviderClass,
+                                 boolean skipSerialize,
+                                 boolean skipDeserialize,
+                                 Optional<RepresentsSubClassesAnnotation> subClassInfo) {
+        this.representerClass = representerClass;
+        this.modelClass = modelClass;
+        this.linksProviderClass = linksProviderClass == null ? ClassName.get(EmptyLinksProvider.class) : linksProviderClass;
         this.skipSerialize = skipSerialize;
         this.skipDeserialize = skipDeserialize;
+        this.subClassInfo = subClassInfo;
     }
 
     public ClassName getRepresenterClass() {
@@ -45,8 +62,8 @@ public class RepresenterAnnotation {
         return modelClass;
     }
 
-    public ClassName getLinksBuilderClass() {
-        return linksBuilderClass;
+    public ClassName getLinksProviderClass() {
+        return linksProviderClass;
     }
 
     public boolean shouldSkipSerialize() {
@@ -57,19 +74,23 @@ public class RepresenterAnnotation {
         return skipDeserialize;
     }
 
+    public Optional<RepresentsSubClassesAnnotation> getRepresentsSubClassesAnnotation() {
+        return subClassInfo;
+    }
+
     protected String packageNameRelocated() {
         return getRepresenterClass().packageName() + PACKAGE_NAME_SUFFIX;
     }
 
     String mapperClassImplSimpleName() {
-        return getModelClass().simpleName() + MAPPER_CLASS_SUFFIX;
+        return mapperClassImplRelocated().simpleName();
     }
 
     public ClassName mapperClassImplRelocated() {
-        return ClassName.bestGuess(packageNameRelocated() + "." + getModelClass().simpleName() + MAPPER_CLASS_SUFFIX);
+        return ClassName.bestGuess(packageNameRelocated() + "." + getRepresenterClass().simpleName().replaceAll("Representer$", "") + MAPPER_CLASS_SUFFIX);
     }
 
     public boolean hasLinksProvider() {
-        return !getLinksBuilderClass().equals(ClassName.get(EmptyLinksProvider.class));
+        return !getLinksProviderClass().equals(ClassName.get(EmptyLinksProvider.class));
     }
 }

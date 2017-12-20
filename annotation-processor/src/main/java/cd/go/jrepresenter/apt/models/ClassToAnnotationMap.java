@@ -27,7 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class ClassToAnnotationMap {
-    Map<RepresenterAnnotation, List<BaseAnnotation>> classToAnnotationMap = new LinkedHashMap<>();
+    private Map<RepresenterAnnotation, List<BaseAnnotation>> classToAnnotationMap = new LinkedHashMap<>();
 
     public void add(RepresenterAnnotation representerAnnotation) {
         if (!classToAnnotationMap.containsKey(representerAnnotation)) {
@@ -36,7 +36,7 @@ public class ClassToAnnotationMap {
     }
 
 
-    public RepresenterAnnotation representerForClass(ClassName representerClass) {
+    public RepresenterAnnotation findRepresenterAnnotation(TypeName representerClass) {
         return classToAnnotationMap.keySet().stream()
                 .filter(representerAnnotation -> representerAnnotation.getRepresenterClass().equals(representerClass))
                 .findFirst()

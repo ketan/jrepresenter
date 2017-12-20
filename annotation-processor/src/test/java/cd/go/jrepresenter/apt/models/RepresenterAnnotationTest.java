@@ -26,14 +26,14 @@ public class RepresenterAnnotationTest {
 
     @Test
     public void shouldRelocateSourceFiles() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation("com.foo.UserRepresenter", "com.foo.User", EmptyLinksProvider.class.getName(), false, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
 
 
-        assertThat(representerAnnotation.getRepresenterClass()).isEqualTo(ClassName.bestGuess("com.foo.UserRepresenter"));
+        assertThat(representerAnnotation.getRepresenterClass()).isEqualTo(ClassName.bestGuess("com.foo.representers.UserRepresenter"));
         assertThat(representerAnnotation.getModelClass()).isEqualTo(ClassName.bestGuess("com.foo.User"));
 
         assertThat(representerAnnotation.mapperClassImplSimpleName()).isEqualTo("UserMapper");
-        assertThat(representerAnnotation.mapperClassImplRelocated()).isEqualTo(ClassName.bestGuess("com.foo.gen.UserMapper"));
+        assertThat(representerAnnotation.mapperClassImplRelocated()).isEqualTo(ClassName.bestGuess("com.foo.representers.gen.UserMapper"));
     }
 
 }

@@ -16,10 +16,10 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import com.squareup.javapoet.*;
 import cd.go.jrepresenter.LinksMapper;
 import cd.go.jrepresenter.LinksProvider;
 import cd.go.jrepresenter.RequestContext;
+import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
 import java.util.LinkedHashMap;
@@ -56,7 +56,7 @@ public class MapperJavaSourceFile {
         if (representerAnnotation.hasLinksProvider()) {
             classBuilder.addField(FieldSpec.builder(
                     ParameterizedTypeName.get(ClassName.get(LinksProvider.class), representerAnnotation.getModelClass()), "LINKS_PROVIDER", Modifier.STATIC, Modifier.PRIVATE)
-                    .initializer(CodeBlock.builder().add("new $T()", representerAnnotation.getLinksBuilderClass()).build())
+                    .initializer(CodeBlock.builder().add("new $T()", representerAnnotation.getLinksProviderClass()).build())
                     .build());
         }
         JavaFile javaFile = JavaFile.builder(representerAnnotation.packageNameRelocated(), classBuilder.build()).build();
@@ -104,6 +104,7 @@ public class MapperJavaSourceFile {
                         CodeBlock.builder()
                                 .addStatement("$T json = new $T()", Map.class, LinkedHashMap.class)
                                 .add(serializeInternal())
+                                .add(serializeForSubClasses())
                                 .addStatement("return json")
                                 .build()
                 )
@@ -118,12 +119,21 @@ public class MapperJavaSourceFile {
                 .returns(representerAnnotation.getModelClass())
                 .addCode(
                         CodeBlock.builder()
-                                .addStatement("$T model = new $T()", representerAnnotation.getModelClass(), representerAnnotation.getModelClass())
+                                .add(createNewModelObject())
                                 .add(deserializeInternal())
                                 .addStatement("return model")
                                 .build()
                 )
                 .build();
+    }
+
+    private CodeBlock createNewModelObject() {
+        return representerAnnotation.getRepresentsSubClassesAnnotation()
+                .map(subClassesAnnotation -> subClassesAnnotation.getDeserializeCodeBlock(context, representerAnnotation))
+                .orElse(
+                        CodeBlock.builder()
+                                .addStatement("$T model = new $T()", representerAnnotation.getModelClass(), representerAnnotation.getModelClass())
+                                .build());
     }
 
     private CodeBlock serializeInternal() {
@@ -153,8 +163,19 @@ public class MapperJavaSourceFile {
         return serializeInternalBuilder.build();
     }
 
+    private CodeBlock serializeForSubClasses() {
+        CodeBlock.Builder builder = CodeBlock.builder();
+        representerAnnotation.getRepresentsSubClassesAnnotation().ifPresent(representsSubClassesAnnotation -> {
+            builder.add(representsSubClassesAnnotation.getSerializeCodeBlock(context));
+        });
+        return builder.build();
+    }
+
     private CodeBlock deserializeInternal() {
         CodeBlock.Builder deserializeInternalBuilder = CodeBlock.builder();
+        if (representerAnnotation.getRepresenterClass().equals(BaseAnnotation.VOID_CLASS)) {
+            return CodeBlock.builder().addStatement("// todo").build();
+        }
         context.getAnnotationsOn(representerAnnotation).forEach(baseAnnotation -> {
             deserializeInternalBuilder.add(baseAnnotation.getDeserializeCodeBlock(context));
         });

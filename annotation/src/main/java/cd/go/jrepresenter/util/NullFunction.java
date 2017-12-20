@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-package cd.go.jrepresenter.annotations;
+package cd.go.jrepresenter.util;
 
-import cd.go.jrepresenter.EmptyLinksProvider;
-import cd.go.jrepresenter.LinksProvider;
+import java.util.function.Function;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+public class NullFunction implements Function<Object, Object> {
 
-@Target(ElementType.TYPE)
-public @interface Represents {
-    Class<?> value();
-
-    Class<? extends LinksProvider> linksProvider() default EmptyLinksProvider.class;
-
-    boolean skipSerialize() default false;
-
-    boolean skipDeserialize() default false;
-
-    boolean codeGen() default true;
+    @Override
+    public Object apply(Object o) {
+        return null;
+    }
 }
