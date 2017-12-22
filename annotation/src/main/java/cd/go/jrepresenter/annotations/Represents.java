@@ -32,5 +32,4 @@ public @interface Represents {
 
     boolean skipDeserialize() default false;
 
-    boolean codeGen() default true;
 }
