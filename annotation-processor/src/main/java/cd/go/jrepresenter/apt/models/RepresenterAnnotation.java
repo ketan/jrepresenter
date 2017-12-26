@@ -23,7 +23,7 @@ import java.util.Optional;
 
 public class RepresenterAnnotation {
     private static final String MAPPER_CLASS_SUFFIX = "Mapper";
-    private static final String PACKAGE_NAME_SUFFIX = ".gen";
+    private static final String PACKAGE_NAME_PREFIX = "gen.";
 
     private final ClassName representerClass;
     private final ClassName modelClass;
@@ -79,7 +79,7 @@ public class RepresenterAnnotation {
     }
 
     protected String packageNameRelocated() {
-        return getRepresenterClass().packageName() + PACKAGE_NAME_SUFFIX;
+        return PACKAGE_NAME_PREFIX + getRepresenterClass().packageName();
     }
 
     String mapperClassImplSimpleName() {

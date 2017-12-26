@@ -40,7 +40,7 @@ public class MapperJavaSourceFileTest {
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.representers.gen;\n" +
+                "package gen.com.foo.representers;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
@@ -92,7 +92,7 @@ public class MapperJavaSourceFileTest {
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.representers.gen;\n" +
+                "package gen.com.foo.representers;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +
@@ -149,7 +149,7 @@ public class MapperJavaSourceFileTest {
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(backupRepresenterAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.representers.gen;\n" +
+                "package gen.com.foo.representers;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.Backup;\n" +
@@ -188,7 +188,7 @@ public class MapperJavaSourceFileTest {
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.representers.gen;\n" +
+                "package gen.com.foo.representers;\n" +
                 "\n" +
                 "import com.foo.User;\n" +
                 "import java.lang.String;\n" +
@@ -226,7 +226,7 @@ public class MapperJavaSourceFileTest {
         MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
 
         assertThat(mapperJavaSourceFile.toSource()).isEqualToNormalizingNewlines("" +
-                "package com.foo.representers.gen;\n" +
+                "package gen.com.foo.representers;\n" +
                 "\n" +
                 "import cd.go.jrepresenter.RequestContext;\n" +
                 "import com.foo.User;\n" +

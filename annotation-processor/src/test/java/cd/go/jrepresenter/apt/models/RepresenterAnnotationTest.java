@@ -33,7 +33,7 @@ public class RepresenterAnnotationTest {
         assertThat(representerAnnotation.getModelClass()).isEqualTo(ClassName.bestGuess("com.foo.User"));
 
         assertThat(representerAnnotation.mapperClassImplSimpleName()).isEqualTo("UserMapper");
-        assertThat(representerAnnotation.mapperClassImplRelocated()).isEqualTo(ClassName.bestGuess("com.foo.representers.gen.UserMapper"));
+        assertThat(representerAnnotation.mapperClassImplRelocated()).isEqualTo(ClassName.bestGuess("gen.com.foo.representers.UserMapper"));
     }
 
 }

@@ -45,7 +45,7 @@ public class CollectionAnnotationTest {
 
         CodeBlock codeBlock = annotation.getSerializeCodeBlock(context, "json");
 
-        String expectedCode = "json.put(\"users\", com.foo.representers.gen.UserMapper.toJSON(value.getUsersInternal(), requestContext));\n";
+        String expectedCode = "json.put(\"users\", gen.com.foo.representers.UserMapper.toJSON(value.getUsersInternal(), requestContext));\n";
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
     }
 
@@ -68,7 +68,7 @@ public class CollectionAnnotationTest {
 
         String expectedCode = "" +
                 "if (json.containsKey(\"users\")) {\n" +
-                "  model.setUsersInternal(com.foo.representers.gen.UserMapper.fromJSON((java.util.List<java.util.Map>) json.get(\"users\")));\n" +
+                "  model.setUsersInternal(gen.com.foo.representers.UserMapper.fromJSON((java.util.List<java.util.Map>) json.get(\"users\")));\n" +
                 "}\n";
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
     }

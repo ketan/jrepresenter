@@ -46,7 +46,7 @@ public class SubClassInfoAnnotationTest {
 
         assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "json.putAll(cd.go.jrepresenter.LinksMapper.toJSON(new com.tw.GuestUserLinksProvider(), (com.tw.GuestUser) value, requestContext));\n" +
-                "subClassProperties = com.tw.gen.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);" +
+                "subClassProperties = gen.com.tw.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);" +
                 "\n");
     }
 
@@ -57,7 +57,7 @@ public class SubClassInfoAnnotationTest {
         CodeBlock serializeCodeBlock = subClassInfoAnnotation.getSerializeCodeBlock(subClassRepresenterAnnotation);
 
         assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "subClassProperties = com.tw.gen.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);" +
+                "subClassProperties = gen.com.tw.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);" +
                 "\n");
     }
 

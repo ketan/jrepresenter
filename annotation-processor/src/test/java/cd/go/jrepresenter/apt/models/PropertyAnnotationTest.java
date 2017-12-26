@@ -116,7 +116,7 @@ public class PropertyAnnotationTest {
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(context, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"user\", com.tw.gen.UserMapper.toJSON(value.getTriggeredBy(), requestContext));\n");
+        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"user\", gen.com.tw.UserMapper.toJSON(value.getTriggeredBy(), requestContext));\n");
     }
 
     @Test
@@ -136,7 +136,7 @@ public class PropertyAnnotationTest {
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(context);
         assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "if (json.containsKey(\"user\")) {\n" +
-                "  model.setTriggeredBy(com.tw.gen.UserMapper.fromJSON((java.util.Map) json.get(\"user\")));\n" +
+                "  model.setTriggeredBy(gen.com.tw.UserMapper.fromJSON((java.util.Map) json.get(\"user\")));\n" +
                 "}\n"
         );
     }

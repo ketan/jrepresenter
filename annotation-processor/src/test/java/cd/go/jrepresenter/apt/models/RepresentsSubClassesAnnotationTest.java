@@ -59,10 +59,10 @@ public class RepresentsSubClassesAnnotationTest {
         assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "java.util.Map subClassProperties = null;\n" +
                 "if (value instanceof com.tw.GuestUser) {\n" +
-                "  subClassProperties = com.tw.representers.gen.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
+                "  subClassProperties = gen.com.tw.representers.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
                 "}\n" +
                 "else if (value instanceof com.tw.AdminUser) {\n" +
-                "  subClassProperties = com.tw.representers.gen.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
+                "  subClassProperties = gen.com.tw.representers.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
                 "}\n" +
                 "json.put(\"attributes\", subClassProperties);\n");
     }
@@ -77,10 +77,10 @@ public class RepresentsSubClassesAnnotationTest {
         assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "java.util.Map subClassProperties = null;\n" +
                 "if (value instanceof com.tw.GuestUser) {\n" +
-                "  subClassProperties = com.tw.representers.gen.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
+                "  subClassProperties = gen.com.tw.representers.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
                 "}\n" +
                 "else if (value instanceof com.tw.AdminUser) {\n" +
-                "  subClassProperties = com.tw.representers.gen.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
+                "  subClassProperties = gen.com.tw.representers.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
                 "}\n" +
                 "json.putAll(subClassProperties);\n");
     }
@@ -96,10 +96,10 @@ public class RepresentsSubClassesAnnotationTest {
                 "com.tw.User model = null;\n" +
                 "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
                 "if (type.equals(\"guest\")) {\n" +
-                "  model = com.tw.representers.gen.GuestUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
+                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
                 "}\n" +
                 "else if (type.equals(\"admin\")) {\n" +
-                "  model = com.tw.representers.gen.AdminUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
+                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
                 "}\n" +
                 "else {\n" +
                 "  throw new java.lang.RuntimeException(\"Could not find any subclass for specified type. Possible values are: guest,admin\");\n" +
@@ -117,10 +117,10 @@ public class RepresentsSubClassesAnnotationTest {
                 "com.tw.User model = null;\n" +
                 "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
                 "if (type.equals(\"guest\")) {\n" +
-                "  model = com.tw.representers.gen.GuestUserMapper.fromJSON(json);\n" +
+                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON(json);\n" +
                 "}\n" +
                 "else if (type.equals(\"admin\")) {\n" +
-                "  model = com.tw.representers.gen.AdminUserMapper.fromJSON(json);\n" +
+                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON(json);\n" +
                 "}\n" +
                 "else {\n" +
                 "  throw new java.lang.RuntimeException(\"Could not find any subclass for specified type. Possible values are: guest,admin\");\n" +
