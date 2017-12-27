@@ -95,10 +95,10 @@ public class RepresentsSubClassesAnnotationTest {
         assertThat(deserializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "com.tw.User model = null;\n" +
                 "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
-                "if (type.equals(\"guest\")) {\n" +
+                "if (\"guest\".equals(type)) {\n" +
                 "  model = gen.com.tw.representers.GuestUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
                 "}\n" +
-                "else if (type.equals(\"admin\")) {\n" +
+                "else if (\"admin\".equals(type)) {\n" +
                 "  model = gen.com.tw.representers.AdminUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
                 "}\n" +
                 "else {\n" +
@@ -116,10 +116,10 @@ public class RepresentsSubClassesAnnotationTest {
         assertThat(deserializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
                 "com.tw.User model = null;\n" +
                 "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
-                "if (type.equals(\"guest\")) {\n" +
+                "if (\"guest\".equals(type)) {\n" +
                 "  model = gen.com.tw.representers.GuestUserMapper.fromJSON(json);\n" +
                 "}\n" +
-                "else if (type.equals(\"admin\")) {\n" +
+                "else if (\"admin\".equals(type)) {\n" +
                 "  model = gen.com.tw.representers.AdminUserMapper.fromJSON(json);\n" +
                 "}\n" +
                 "else {\n" +

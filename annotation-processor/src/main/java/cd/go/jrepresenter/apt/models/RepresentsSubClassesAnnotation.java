@@ -79,7 +79,7 @@ public class RepresentsSubClassesAnnotation {
 
         this.getSubClassInfos().forEach(subType -> {
             ifElseBuilder
-                    .addIf("$N.equals($S)", this.getProperty(), subType.getValue())
+                    .addIf("$S.equals($N)", subType.getValue(), this.getProperty())
                     .withBody(modelFromSubClass(context, subType));
 
         });
