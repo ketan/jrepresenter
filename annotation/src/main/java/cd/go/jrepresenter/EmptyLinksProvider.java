@@ -16,13 +16,13 @@
 
 package cd.go.jrepresenter;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class EmptyLinksProvider<T> implements LinksProvider<T> {
 
     @Override
     public List<Link> getLinks(T model, RequestContext requestContext) {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 }

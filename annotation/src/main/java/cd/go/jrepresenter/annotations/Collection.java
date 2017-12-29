@@ -29,7 +29,7 @@ import java.util.function.Function;
 public @interface Collection {
     String modelAttributeName() default "";
 
-
+    Class<?> modelAttributeType();
 
     Class<? extends Function> serializer() default NullFunction.class;
 

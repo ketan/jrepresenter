@@ -16,195 +16,233 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import cd.go.jrepresenter.EmptyLinksProvider;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeName;
 import org.junit.Test;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static cd.go.jrepresenter.apt.models.TestConstants.*;
 
 public class PropertyAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithoutSerializer() throws Exception {
-        Attribute modelAttribute = new Attribute("fname", ClassName.get(String.class));
-        Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
 
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
                 .build();
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"first_name\", value.getFname());\n");
+        assertThat(codeBlock.toString()).isEqualTo("json.put(\"first_name\", value.getFname());\n");
     }
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithSerializer() throws Exception {
-        Attribute modelAttribute = new Attribute("fname", ClassName.bestGuess("com.tw.CaseInsensitiveString"));
-        Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", CASE_INSENSITIVE_STRING);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withSerializerClassName(ClassName.bestGuess("com.tw.CaseInsensitiveStringSerializer"))
+                .withSerializerClassName(CASE_INSENSITIVE_STRING_SERIALIZER)
                 .build();
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"first_name\", new com.tw.CaseInsensitiveStringSerializer().apply(value.getFname()));\n");
+        assertThat(codeBlock.toString()).isEqualTo("json.put(\"first_name\", gen.cd.go.jrepresenter.Constants.Serializers.CASE_INSENSITIVE_STRING.apply(value.getFname()));\n");
     }
 
     @Test
     public void shouldGenerateCodeToDeserializeWithoutSerializer() {
-        Attribute modelAttribute = new Attribute("fname", ClassName.get(String.class));
-        Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
                 .build();
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(null);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"first_name\")) {\n" +
-                "  model.setFname((java.lang.String) json.get(\"first_name\"));\n" +
-                "}\n");
+        String expectedCode = "" +
+                "if (jsonObject.containsKey(\"first_name\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"first_name\");\n" +
+                "  if (!(jsonAttribute instanceof java.lang.String)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"first_name\", java.lang.String.class, jsonObject);\n" +
+                "  }\n" +
+                "  java.lang.String deserializedJsonAttribute = (java.lang.String) jsonAttribute;\n" +
+                "  java.lang.String modelAttribute = (java.lang.String) deserializedJsonAttribute;\n" +
+                "  model.setFname(modelAttribute);\n" +
+                "}\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToDeserializeWithoutSerializerWithPrimitiveType() {
-        Attribute modelAttribute = new Attribute("age", TypeName.get(int.class));
-        Attribute jsonAttribute = new Attribute("age", TypeName.get(int.class));
+        Attribute modelAttribute = new Attribute("age", INT_TYPE);
+        Attribute jsonAttribute = new Attribute("age", INT_TYPE);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
                 .build();
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(null);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"age\")) {\n" +
-                "  model.setAge((int) json.get(\"age\"));\n" +
-                "}\n");
+        String expectedCodeBlock = "" +
+                "if (jsonObject.containsKey(\"age\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"age\");\n" +
+                "  if (!(jsonAttribute instanceof int)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"age\", int.class, jsonObject);\n" +
+                "  }\n" +
+                "  int deserializedJsonAttribute = (int) jsonAttribute;\n" +
+                "  int modelAttribute = (int) deserializedJsonAttribute;\n" +
+                "  model.setAge(modelAttribute);\n" +
+                "}\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCodeBlock);
     }
 
     @Test
     public void shouldGenerateCodeToDeserializeWithDeserializerClass() {
-        Attribute modelAttribute = new Attribute("fname", ClassName.bestGuess("com.tw.CaseInsensitiveString"));
-        Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", CASE_INSENSITIVE_STRING);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withDeserializerClassName(ClassName.bestGuess("com.tw.CaseInsensitiveStringDeserializer"))
+                .withDeserializerClassName(CASE_INSENSITIVE_STRING_DESERIALIZER)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(null);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"first_name\")) {\n" +
-                "  model.setFname(new com.tw.CaseInsensitiveStringDeserializer().apply((java.lang.String) json.get(\"first_name\")));\n" +
+        assertThat(codeBlock.toString()).isEqualTo("" +
+                "if (jsonObject.containsKey(\"first_name\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"first_name\");\n" +
+                "  if (!(jsonAttribute instanceof java.lang.String)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"first_name\", java.lang.String.class, jsonObject);\n" +
+                "  }\n" +
+                "  com.tw.CaseInsensitiveString deserializedJsonAttribute = gen.cd.go.jrepresenter.Constants.Deserializers.CASE_INSENSITIVE_STRING.apply((java.lang.String) jsonAttribute);\n" +
+                "  com.tw.CaseInsensitiveString modelAttribute = (com.tw.CaseInsensitiveString) deserializedJsonAttribute;\n" +
+                "  model.setFname(modelAttribute);\n" +
                 "}\n");
     }
 
     @Test
     public void shouldGenerateCodeToSerializePropertyUsingRepresenter() {
-        Attribute modelAttribute = new Attribute("triggeredBy", ClassName.bestGuess("com.tw.User"));
+        Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
         Attribute jsonAttribute = new Attribute("user", null);
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.tw.UserRepresenter"), ClassName.bestGuess("com.tw.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, false);
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
 
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withRepresenterClassName(ClassName.bestGuess("com.tw.UserRepresenter"))
+                .withRepresenterClassName(TestConstants.USER_REPRESENTER_CLASS)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(context, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"user\", gen.com.tw.UserMapper.toJSON(value.getTriggeredBy(), requestContext));\n");
+        assertThat(codeBlock.toString()).isEqualTo("json.put(\"user\", gen.com.tw.UserMapper.toJSON(value.getTriggeredBy(), requestContext));\n");
     }
 
     @Test
     public void shouldGenerateCodeToDeserializePropertyUsingRepresenter() {
-        Attribute modelAttribute = new Attribute("triggeredBy", ClassName.bestGuess("com.tw.User"));
+        Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
         Attribute jsonAttribute = new Attribute("user", ClassName.get(Map.class));
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.tw.UserRepresenter"), ClassName.bestGuess("com.tw.User"), ClassName.bestGuess(EmptyLinksProvider.class.getName()), false, false);
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, false);
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
 
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withRepresenterClassName(ClassName.bestGuess("com.tw.UserRepresenter"))
+                .withRepresenterClassName(TestConstants.USER_REPRESENTER_CLASS)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(context);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"user\")) {\n" +
-                "  model.setTriggeredBy(gen.com.tw.UserMapper.fromJSON((java.util.Map) json.get(\"user\")));\n" +
-                "}\n"
-        );
+        String expectedCode = "" +
+                "if (jsonObject.containsKey(\"user\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"user\");\n" +
+                "  if (!(jsonAttribute instanceof java.util.Map)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"user\", java.util.Map.class, jsonObject);\n" +
+                "  }\n" +
+                "  com.tw.User deserializedJsonAttribute = (java.util.Map) jsonAttribute;\n" +
+                "  com.tw.User modelAttribute = gen.com.tw.UserMapper.fromJSON((java.util.Map) deserializedJsonAttribute);\n" +
+                "  model.setTriggeredBy(modelAttribute);\n" +
+                "}\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetter() throws Exception {
-        Attribute modelAttribute = new Attribute("fname", ClassName.get(String.class));
-        Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withGetterClassName(ClassName.bestGuess("com.tw.FNameGetter"))
+                .withGetterClassName(FNAME_GETTER)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("json.put(\"first_name\", new com.tw.FNameGetter().apply(value));\n");
+        assertThat(codeBlock.toString()).isEqualTo("json.put(\"first_name\", gen.cd.go.jrepresenter.Constants.Getters.F_NAME.apply(value));\n");
     }
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetterAndSerializer() throws Exception {
-        Attribute modelAttribute = new Attribute("fname", ClassName.get(String.class));
-        Attribute jsonAttribute = new Attribute("firstName", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withSerializerClassName(ClassName.bestGuess("com.tw.CaseInsensitiveStringSerializer"))
-                .withGetterClassName(ClassName.bestGuess("com.tw.FNameGetter"))
+                .withSerializerClassName(CASE_INSENSITIVE_STRING_SERIALIZER)
+                .withGetterClassName(FNAME_GETTER)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.getSerializeCodeBlock(null, "json");
-        assertThat(codeBlock.toString()).isEqualTo("json.put(\"first_name\", new com.tw.CaseInsensitiveStringSerializer().apply(new com.tw.FNameGetter().apply(value)));\n");
+        assertThat(codeBlock.toString()).isEqualTo("json.put(\"first_name\", gen.cd.go.jrepresenter.Constants.Serializers.CASE_INSENSITIVE_STRING.apply(gen.cd.go.jrepresenter.Constants.Getters.F_NAME.apply(value)));\n");
     }
 
     @Test
     public void shouldGenerateCodeToDeserializeWithSetter() {
-        Attribute modelAttribute = new Attribute("triggeredBy", ClassName.bestGuess("com.tw.User"));
-        Attribute jsonAttribute = new Attribute("user", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
+        Attribute jsonAttribute = new Attribute("user", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withSetterClassName(ClassName.bestGuess("com.tw.TriggeredBySetter"))
+                .withSetterClassName(TRIGGERED_BY_SETTER)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(null);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"user\")) {\n" +
-                "  new com.tw.TriggeredBySetter().accept(model, (java.lang.String) json.get(\"user\"));\n" +
-                "}\n"
-        );
+        String expectedCode = "" +
+                "if (jsonObject.containsKey(\"user\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"user\");\n" +
+                "  if (!(jsonAttribute instanceof java.lang.String)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"user\", java.lang.String.class, jsonObject);\n" +
+                "  }\n" +
+                "  com.tw.User deserializedJsonAttribute = (java.lang.String) jsonAttribute;\n" +
+                "  com.tw.User modelAttribute = (com.tw.User) deserializedJsonAttribute;\n" +
+                "  new com.tw.TriggeredBySetter().accept(model, modelAttribute);\n" +
+                "}\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToDeserializeWithSetterAndDeserializer() {
-        Attribute modelAttribute = new Attribute("triggeredBy", ClassName.bestGuess("com.tw.User"));
-        Attribute jsonAttribute = new Attribute("user", ClassName.get(String.class));
+        Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
+        Attribute jsonAttribute = new Attribute("user", STRING_CLASS);
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withDeserializerClassName(ClassName.bestGuess("com.tw.CaseInsensitiveStringDeserializer"))
-                .withSetterClassName(ClassName.bestGuess("com.tw.TriggeredBySetter"))
+                .withDeserializerClassName(CASE_INSENSITIVE_STRING_DESERIALIZER)
+                .withSetterClassName(TRIGGERED_BY_SETTER)
                 .build();
 
         CodeBlock codeBlock = propertyAnnotation.doGetDeserializeCodeBlock(null);
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines("" +
-                "if (json.containsKey(\"user\")) {\n" +
-                "  new com.tw.TriggeredBySetter().accept(model, new com.tw.CaseInsensitiveStringDeserializer().apply((java.lang.String) json.get(\"user\")));\n" +
-                "}\n"
-        );
+        String expectedCode = "" +
+                "if (jsonObject.containsKey(\"user\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"user\");\n" +
+                "  if (!(jsonAttribute instanceof java.lang.String)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"user\", java.lang.String.class, jsonObject);\n" +
+                "  }\n" +
+                "  com.tw.User deserializedJsonAttribute = gen.cd.go.jrepresenter.Constants.Deserializers.CASE_INSENSITIVE_STRING.apply((java.lang.String) jsonAttribute);\n" +
+                "  com.tw.User modelAttribute = (com.tw.User) deserializedJsonAttribute;\n" +
+                "  new com.tw.TriggeredBySetter().accept(model, modelAttribute);\n" +
+                "}\n";
+
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test

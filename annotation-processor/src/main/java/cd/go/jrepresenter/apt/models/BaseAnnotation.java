@@ -16,13 +16,21 @@
 
 package cd.go.jrepresenter.apt.models;
 
+import cd.go.jrepresenter.JsonParseException;
+import cd.go.jrepresenter.apt.util.DebugStatement;
 import cd.go.jrepresenter.util.FalseFunction;
 import cd.go.jrepresenter.util.NullBiConsumer;
 import cd.go.jrepresenter.util.NullFunction;
 import cd.go.jrepresenter.util.TrueFunction;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+
+import static cd.go.jrepresenter.apt.models.MapperJavaConstantsFile.SKIP_PARSE_BUILDER;
+import static cd.go.jrepresenter.apt.models.MapperJavaConstantsFile.SKIP_RENDER_BUILDER;
+import static cd.go.jrepresenter.apt.models.MapperJavaSourceFile.*;
+import static cd.go.jrepresenter.apt.util.TypeUtil.listOf;
 
 public abstract class BaseAnnotation {
     protected static final ClassName NULL_FUNCTION = ClassName.get(NullFunction.class);
@@ -64,7 +72,7 @@ public abstract class BaseAnnotation {
             return CodeBlock.builder().build();
         } else {
             return CodeBlock.builder()
-                    .beginControlFlow("if (new $T().apply(value))", skipRender)
+                    .beginControlFlow("if (!$T.apply(value))", SKIP_RENDER_BUILDER.fieldName(skipRender))
                     .add(doSetSerializeCodeBlock(classToAnnotationMap, jsonVariableName))
                     .endControlFlow()
                     .build();
@@ -72,25 +80,32 @@ public abstract class BaseAnnotation {
         }
     }
 
-    public final CodeBlock getDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
+    public final CodeBlock getDeserializeCodeBlock(ClassToAnnotationMap context) {
         if (skipParse.equals(FALSE_FUNCTION)) {
-            return doGetDeserializeCodeBlock(classToAnnotationMap);
+            return CodeBlock.builder()
+                    .add(doGetDeserializeCodeBlock(context))
+                    .build();
+
         }
         if (skipParse.equals(TRUE_FUNCTION)) {
             return CodeBlock.builder().build();
         } else {
             return CodeBlock.builder()
-                    .beginControlFlow("if (new $T().apply(value))", skipParse)
-                    .add(doGetDeserializeCodeBlock(classToAnnotationMap))
+                    .beginControlFlow("if (!$T.apply(value))", SKIP_PARSE_BUILDER.fieldName(skipParse))
+                    .add(doGetDeserializeCodeBlock(context))
                     .endControlFlow()
                     .build();
 
         }
     }
 
-    protected abstract CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap classToAnnotationMap, String jsonVariableName);
+    protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap context, String jsonVariableName) {
+        return putInJson(jsonVariableName, applyRenderRepresenter(context, applySerializer(applyGetter())));
+    }
 
-    public boolean hasRepresenter() {
+    protected abstract CodeBlock applySerializer(CodeBlock getterCodeBlock);
+
+    protected boolean hasRepresenter() {
         return !representerClassName.equals(VOID_CLASS);
     }
 
@@ -102,29 +117,28 @@ public abstract class BaseAnnotation {
         return !setterClassName.equals(NULL_BICONSUMER);
     }
 
-    protected CodeBlock applyGetter() {
+    CodeBlock applyGetter() {
         CodeBlock.Builder builder = CodeBlock.builder();
         if (hasGetterClass()) {
-            return builder.add("new $T().apply(value)", getterClassName).build();
+            return builder.add("$T.apply(value)", MapperJavaConstantsFile.GETTERS_BUILDER.fieldName(getterClassName)).build();
         } else {
             return builder.add("value.$N()", modelAttributeGetter()).build();
         }
     }
 
-    protected CodeBlock applyRenderRepresenter(ClassToAnnotationMap context, CodeBlock getterWithSerializer) {
+    CodeBlock applyRenderRepresenter(ClassToAnnotationMap context, CodeBlock getterWithSerializer) {
         if (hasRepresenter()) {
-            CodeBlock.Builder builder = CodeBlock.builder();
-            ClassName mapperClass = context.findRepresenterAnnotation(representerClassName).mapperClassImplRelocated();
-            builder.add("$T.toJSON(", mapperClass)
+            return CodeBlock.builder()
+                    .add("$T.toJSON(", context.findRepresenterAnnotation(representerClassName).mapperClassImplRelocated())
                     .add(getterWithSerializer)
-                    .add(", requestContext)");
-            return builder.build();
+                    .add(", requestContext)")
+                    .build();
         } else {
             return getterWithSerializer;
         }
     }
 
-    protected CodeBlock putInJson(String jsonVariableName, CodeBlock whatToPut) {
+    CodeBlock putInJson(String jsonVariableName, CodeBlock whatToPut) {
         return CodeBlock.builder()
                 .add("$[")
                 .add("$N.put($S, ", jsonVariableName, jsonAttribute.nameAsSnakeCase())
@@ -133,7 +147,16 @@ public abstract class BaseAnnotation {
                 .build();
     }
 
-    protected abstract CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap);
+    CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap context) {
+        CodeBlock deserializeCodeBlock = applySetter(applyParseRepresenter(context, applyDeserializer(getValueFromJson())));
+        return CodeBlock.builder()
+                .beginControlFlow("if ($N.containsKey($S))", JSON_OBJECT_VAR_NAME, jsonAttribute.nameAsSnakeCase())
+                .add(deserializeCodeBlock)
+                .endControlFlow()
+                .build();
+    }
+
+    protected abstract CodeBlock applyDeserializer(CodeBlock valueFromJson);
 
     protected String modelAttributeGetter() {
         return "get" + modelAttribute.name.substring(0, 1).toUpperCase() + modelAttribute.name.substring(1);
@@ -163,33 +186,61 @@ public abstract class BaseAnnotation {
         return !deserializerClassName.equals(NULL_FUNCTION);
     }
 
+    private CodeBlock applySetter(CodeBlock codeToSet) {
+        CodeBlock.Builder builder = CodeBlock.builder()
+                .add(codeToSet)
+                .add(DebugStatement.printDebug("begin applying setter"));
 
-    protected CodeBlock applySetter(CodeBlock codeToSet) {
         if (hasSetterClass()) {
-            return CodeBlock.builder()
-                    .add("new $T().accept(model, ", setterClassName)
-                    .add(codeToSet)
-                    .add(")")
-                    .build();
+            builder.addStatement("new $T().accept(model, $N)", setterClassName, MapperJavaSourceFile.MODEL_ATTRIBUTE_VARIABLE_NAME);
         } else {
-            return CodeBlock.builder()
-                    .add("model.$N(", modelAttributeSetter())
-                    .add(codeToSet)
-                    .add(")")
-                    .build();
+            builder.addStatement("model.$N($N)", modelAttributeSetter(), MapperJavaSourceFile.MODEL_ATTRIBUTE_VARIABLE_NAME);
         }
+
+        builder.add(DebugStatement.printDebug("end applying setter"));
+        return builder.build();
     }
 
-    protected CodeBlock applyParseRepresenter(ClassToAnnotationMap context, CodeBlock deserializedCodeBlock) {
+    private CodeBlock applyParseRepresenter(ClassToAnnotationMap context, CodeBlock deserializedCodeBlock) {
+        CodeBlock.Builder builder = CodeBlock.builder()
+                .add(deserializedCodeBlock)
+                .add(DebugStatement.printDebug("begin applying parse representation"));
+
+        TypeName targetType;
+        if (this instanceof CollectionAnnotation) {
+            targetType = listOf(modelAttribute.type);
+        } else {
+            targetType = modelAttribute.type;
+        }
+
         if (hasRepresenter()) {
             ClassName mapperClass = context.findRepresenterAnnotation(representerClassName).mapperClassImplRelocated();
-            return CodeBlock.builder()
-                    .add("$T.fromJSON(", mapperClass)
-                    .add(deserializedCodeBlock)
-                    .add(")")
-                    .build();
+            builder.addStatement("$T $N = $T.fromJSON(($T) $N)", targetType, MODEL_ATTRIBUTE_VARIABLE_NAME, mapperClass, jsonAttributeRawType(), DESERIALIZED_JSON_ATTRIBUTE_NAME);
         } else {
-            return deserializedCodeBlock;
+            builder.addStatement("$T $N = ($T) $N", targetType, MODEL_ATTRIBUTE_VARIABLE_NAME, targetType, DESERIALIZED_JSON_ATTRIBUTE_NAME);
         }
+
+        builder.add(DebugStatement.printDebug("end applying parse representation"));
+
+        return builder.build();
+    }
+
+    private CodeBlock getValueFromJson() {
+        return CodeBlock.builder()
+                .add(DebugStatement.printDebug("begin to get the value from json"))
+                .addStatement("$T $N = $N.get($S)", Object.class, JSON_ATTRIBUTE_VARIABLE_NAME, JSON_OBJECT_VAR_NAME, jsonAttribute.nameAsSnakeCase())
+                .beginControlFlow("if (!($N instanceof $T))", JSON_ATTRIBUTE_VARIABLE_NAME, jsonAttributeRawType())
+                .addStatement("$T.throwBadJsonType($S, $T.class, $N)", JsonParseException.class, jsonAttribute.nameAsSnakeCase(), jsonAttributeRawType(), JSON_OBJECT_VAR_NAME)
+                .endControlFlow()
+                .add(DebugStatement.printDebug("end to get the value from json"))
+                .build();
+    }
+
+    TypeName jsonAttributeRawType() {
+        TypeName type = jsonAttribute.type;
+        if (type instanceof ParameterizedTypeName) {
+            type = ((ParameterizedTypeName) type).rawType;
+        }
+        return type;
     }
 }

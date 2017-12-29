@@ -16,8 +16,8 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import com.squareup.javapoet.ClassName;
 import cd.go.jrepresenter.EmptyLinksProvider;
+import com.squareup.javapoet.ClassName;
 
 import java.util.Optional;
 
@@ -33,10 +33,10 @@ public class RepresenterAnnotation {
     private final Optional<RepresentsSubClassesAnnotation> subClassInfo;
 
     public RepresenterAnnotation(ClassName representerClass,
-                                        ClassName modelClass,
-                                        ClassName linksProviderClass,
-                                        boolean skipSerialize,
-                                        boolean skipDeserialize) {
+                                 ClassName modelClass,
+                                 ClassName linksProviderClass,
+                                 boolean skipSerialize,
+                                 boolean skipDeserialize) {
         this(representerClass, modelClass, linksProviderClass, skipSerialize, skipDeserialize, Optional.empty());
     }
 

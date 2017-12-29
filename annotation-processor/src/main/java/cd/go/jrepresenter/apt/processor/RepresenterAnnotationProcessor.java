@@ -21,14 +21,12 @@ import cd.go.jrepresenter.annotations.Property;
 import cd.go.jrepresenter.annotations.Represents;
 import cd.go.jrepresenter.annotations.RepresentsSubClasses;
 import cd.go.jrepresenter.apt.models.*;
+import cd.go.jrepresenter.apt.util.DebugStatement;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedSourceVersion;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -49,11 +47,20 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedOptions("jrepresenterDebug")
 public class RepresenterAnnotationProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         return new LinkedHashSet<>(Arrays.asList(Represents.class.getName(), Property.class.getName(), Collection.class.getName()));
+    }
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+        if (processingEnv.getOptions().getOrDefault("jrepresenterDebug", "false").equals("true")) {
+            DebugStatement.enable();
+        }
     }
 
     @Override
@@ -102,9 +109,8 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
             String jsonAttributeName = getJsonAttributeName(method);
             String modelAttributeName = getModelAttributeName(method, annotation);
 
-            TypeName modelAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
+            TypeName modelAttributeType = getClassNameFromAnnotationMethod(annotation, "modelAttributeType");
             TypeName jsonAttributeType = ClassName.get(((ExecutableType) method.asType()).getReturnType());
-
 
             CollectionAnnotation propertyAnnotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                     .withRepresenterClassName(getClassNameFromAnnotationMethod(annotation, "representer"))
@@ -130,7 +136,7 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
     }
 
     private Optional<RepresentsSubClassesAnnotation> extractSubClassInfo(RepresentsSubClasses annotation) {
-        if(annotation == null) {
+        if (annotation == null) {
             return Optional.empty();
         }
         RepresentsSubClasses.SubClassInfo[] subClassInfos = annotation.subClasses();
@@ -185,6 +191,16 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
     }
 
     private void writeFiles(ClassToAnnotationMap classToAnnotationMap) {
+        if (classToAnnotationMap.isEmpty()) {
+            return;
+        }
+
+        try {
+            writeConstantsFile(classToAnnotationMap);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         classToAnnotationMap.forEach((representerAnnotation) -> {
             try {
                 writeMapperFile(classToAnnotationMap, representerAnnotation);
@@ -192,6 +208,17 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private void writeConstantsFile(ClassToAnnotationMap context) throws IOException {
+        MapperJavaConstantsFile javaSourceFile = new MapperJavaConstantsFile(context);
+        processingEnv.getMessager().printMessage(NOTE, "Generating representer for " + javaSourceFile.getModelClass());
+        JavaFileObject builderFile = processingEnv.getFiler().createSourceFile(javaSourceFile.getModelClass().toString());
+
+        try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
+            out.append(javaSourceFile.toSource());
+        }
+
     }
 
     private void writeMapperFile(ClassToAnnotationMap context, RepresenterAnnotation representerAnnotation) throws IOException {

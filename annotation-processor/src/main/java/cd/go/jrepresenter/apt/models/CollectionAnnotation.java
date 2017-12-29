@@ -16,54 +16,31 @@
 
 package cd.go.jrepresenter.apt.models;
 
+import cd.go.jrepresenter.apt.util.DebugStatement;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CollectionAnnotation extends BaseAnnotation {
+import static cd.go.jrepresenter.apt.models.MapperJavaSourceFile.JSON_ATTRIBUTE_VARIABLE_NAME;
 
-    private static final ParameterizedTypeName LIST_OF_MAPS_TYPE = ParameterizedTypeName.get(List.class, Map.class);
+public class CollectionAnnotation extends BaseAnnotation {
 
     public CollectionAnnotation(Attribute modelAttribute, Attribute jsonAttribute, TypeName representerClassName, TypeName serializerClassName, TypeName deserializerClassName, TypeName getterClassName, TypeName setterClassName, TypeName skipParse, TypeName skipRender) {
         super(modelAttribute, jsonAttribute, representerClassName, serializerClassName, deserializerClassName, getterClassName, setterClassName, skipParse, skipRender);
     }
 
-    @Override
-    protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap context, String jsonVariableName) {
-        return putInJson(jsonVariableName,
-                applyRenderRepresenter(context,
-                        applySerializer(
-                                applyGetter())));
-    }
 
     @Override
-    public CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
-        CodeBlock deserializeCodeBlock = applySetter(
-                applyParseRepresenter(classToAnnotationMap,
-                        applyDeserializer(
-                                getValueFromJson())));
-
-        return CodeBlock.builder()
-                .beginControlFlow("if (json.containsKey($S))", jsonAttribute.name)
-                .add("$[")
-                .add(deserializeCodeBlock)
-                .add(";\n$]")
-                .endControlFlow()
-                .build();
-    }
-
-    private CodeBlock applySerializer(CodeBlock valueFromGetter) {
+    protected CodeBlock applySerializer(CodeBlock valueFromGetter) {
         if (hasSerializer()) {
             return CodeBlock.builder()
+                    .add(DebugStatement.printDebug("foo"))
                     .add("(")
                     .add(valueFromGetter)
                     .add(")")
-                    .add(".stream().map(new $T()::apply).collect($T.toList())",
-                            serializerClassName,
+                    .add(".stream().map($T::apply).collect($T.toList())",
+                            MapperJavaConstantsFile.SERIALIZE_BUILDER.fieldName(serializerClassName),
                             Collectors.class)
                     .build();
         } else {
@@ -71,22 +48,31 @@ public class CollectionAnnotation extends BaseAnnotation {
         }
     }
 
-    private CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+    @Override
+    protected CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+        CodeBlock.Builder builder = CodeBlock.builder()
+                .add(valueFromJson)
+                .add(DebugStatement.printDebug("begin to apply deserializer"));
         if (hasDeserializer()) {
-            return CodeBlock.builder()
-                    .add("(")
-                    .add(valueFromJson)
-                    .add(")")
-                    .add(".stream().map(new $T()::apply).collect($T.toList())", deserializerClassName, Collectors.class)
-                    .build();
+            builder.addStatement("$T $N = (($T) ($N)).stream().map($T::apply).collect($T.toList())",
+                    jsonAttributeRawType(),
+                    MapperJavaSourceFile.DESERIALIZED_JSON_ATTRIBUTE_NAME,
+                    jsonAttribute.type,
+                    JSON_ATTRIBUTE_VARIABLE_NAME,
+                    MapperJavaConstantsFile.DESERIALIZER_BUILDER.fieldName(deserializerClassName),
+                    Collectors.class);
         } else {
-            return valueFromJson;
+            builder.addStatement(
+                    "$T $N = ($T) $N",
+                    jsonAttributeRawType(),
+                    MapperJavaSourceFile.DESERIALIZED_JSON_ATTRIBUTE_NAME,
+                    jsonAttributeRawType(),
+                    JSON_ATTRIBUTE_VARIABLE_NAME);
         }
+
+        builder.add(DebugStatement.printDebug("end applying deserializer"));
+
+        return builder.build();
     }
 
-    private CodeBlock getValueFromJson() {
-        return CodeBlock.builder()
-                .add("($T) json.get($S)", jsonAttribute.type, jsonAttribute.nameAsSnakeCase())
-                .build();
-    }
 }

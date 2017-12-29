@@ -21,6 +21,7 @@ import cd.go.jrepresenter.annotations.Property;
 import cd.go.jrepresenter.annotations.Represents;
 import cd.go.jrepresenter.examples.CaseInsensitiveString;
 import cd.go.jrepresenter.examples.Pipeline;
+import cd.go.jrepresenter.examples.Stage;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringDeserializer;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringSerializer;
 
@@ -33,7 +34,7 @@ public interface PipelineRepresenter {
     @Property(serializer = CaseInsensitiveStringSerializer.class, deserializer = CaseInsensitiveStringDeserializer.class, modelAttributeType = CaseInsensitiveString.class)
     public String name();
 
-    @Collection(representer = StagesRepresenter.class)
+    @Collection(representer = StagesRepresenter.class, modelAttributeType = Stage.class)
     public List<Map> stages();
 
 }

@@ -27,10 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RepresentsSubClassesAnnotationTest {
 
-    private ClassName userRepresenterClass = ClassName.bestGuess("com.tw.representers.UserRepresenter");
     private ClassName guestUserRepresenterClass = ClassName.bestGuess("com.tw.representers.GuestUserRepresenter");
     private ClassName adminUserRepresenterClass = ClassName.bestGuess("com.tw.representers.AdminUserRepresenter");
-    private ClassName userClass = ClassName.bestGuess("com.tw.User");
     private ClassName guestUserClass = ClassName.bestGuess("com.tw.GuestUser");
     private ClassName adminUserClass = ClassName.bestGuess("com.tw.AdminUser");
     private ClassToAnnotationMap context;
@@ -41,7 +39,7 @@ public class RepresentsSubClassesAnnotationTest {
     @Before
     public void setUp() throws Exception {
         context = new ClassToAnnotationMap();
-        userRepresenterAnnotation = new RepresenterAnnotation(userRepresenterClass, userClass, null, false, false);
+        userRepresenterAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, TestConstants.USER_MODEL, null, false, false);
         context.add(userRepresenterAnnotation);
         context.add(new RepresenterAnnotation(guestUserRepresenterClass, guestUserClass, null, false, false));
         context.add(new RepresenterAnnotation(adminUserRepresenterClass, adminUserClass, null, false, false));
@@ -56,7 +54,7 @@ public class RepresentsSubClassesAnnotationTest {
 
         CodeBlock serializeCodeBlock = representsSubClassesAnnotation.getSerializeCodeBlock(context);
 
-        assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
+        String expectedCode = "" +
                 "java.util.Map subClassProperties = null;\n" +
                 "if (value instanceof com.tw.GuestUser) {\n" +
                 "  subClassProperties = gen.com.tw.representers.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
@@ -64,7 +62,8 @@ public class RepresentsSubClassesAnnotationTest {
                 "else if (value instanceof com.tw.AdminUser) {\n" +
                 "  subClassProperties = gen.com.tw.representers.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
                 "}\n" +
-                "json.put(\"attributes\", subClassProperties);\n");
+                "jsonObject.put(\"attributes\", subClassProperties);\n";
+        assertThat(serializeCodeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
@@ -74,7 +73,7 @@ public class RepresentsSubClassesAnnotationTest {
 
         CodeBlock serializeCodeBlock = representsSubClassesAnnotation.getSerializeCodeBlock(context);
 
-        assertThat(serializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
+        String expectedCode = "" +
                 "java.util.Map subClassProperties = null;\n" +
                 "if (value instanceof com.tw.GuestUser) {\n" +
                 "  subClassProperties = gen.com.tw.representers.GuestUserMapper.toJSON((com.tw.GuestUser) value, requestContext);\n" +
@@ -82,7 +81,8 @@ public class RepresentsSubClassesAnnotationTest {
                 "else if (value instanceof com.tw.AdminUser) {\n" +
                 "  subClassProperties = gen.com.tw.representers.AdminUserMapper.toJSON((com.tw.AdminUser) value, requestContext);\n" +
                 "}\n" +
-                "json.putAll(subClassProperties);\n");
+                "jsonObject.putAll(subClassProperties);\n";
+        assertThat(serializeCodeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
@@ -92,18 +92,19 @@ public class RepresentsSubClassesAnnotationTest {
 
         CodeBlock deserializeCodeBlock = representsSubClassesAnnotation.getDeserializeCodeBlock(context, userRepresenterAnnotation);
 
-        assertThat(deserializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
+        String expectedCode = "" +
                 "com.tw.User model = null;\n" +
-                "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
+                "java.lang.String type = (java.lang.String) jsonObject.get(\"type\");\n" +
                 "if (\"guest\".equals(type)) {\n" +
-                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
+                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON((java.util.Map) jsonObject.get(\"attributes\"));\n" +
                 "}\n" +
                 "else if (\"admin\".equals(type)) {\n" +
-                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON((java.util.Map) json.get(\"attributes\"));\n" +
+                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON((java.util.Map) jsonObject.get(\"attributes\"));\n" +
                 "}\n" +
                 "else {\n" +
                 "  throw new java.lang.RuntimeException(\"Could not find any subclass for specified type. Possible values are: guest,admin\");\n" +
-                "}\n");
+                "}\n";
+        assertThat(deserializeCodeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
@@ -113,18 +114,19 @@ public class RepresentsSubClassesAnnotationTest {
 
         CodeBlock deserializeCodeBlock = representsSubClassesAnnotation.getDeserializeCodeBlock(context, userRepresenterAnnotation);
 
-        assertThat(deserializeCodeBlock.toString()).isEqualToNormalizingNewlines("" +
+        String expectedCode = "" +
                 "com.tw.User model = null;\n" +
-                "java.lang.String type = (java.lang.String) json.get(\"type\");\n" +
+                "java.lang.String type = (java.lang.String) jsonObject.get(\"type\");\n" +
                 "if (\"guest\".equals(type)) {\n" +
-                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON(json);\n" +
+                "  model = gen.com.tw.representers.GuestUserMapper.fromJSON(jsonObject);\n" +
                 "}\n" +
                 "else if (\"admin\".equals(type)) {\n" +
-                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON(json);\n" +
+                "  model = gen.com.tw.representers.AdminUserMapper.fromJSON(jsonObject);\n" +
                 "}\n" +
                 "else {\n" +
                 "  throw new java.lang.RuntimeException(\"Could not find any subclass for specified type. Possible values are: guest,admin\");\n" +
-                "}\n");
+                "}\n";
+        assertThat(deserializeCodeBlock.toString()).isEqualTo(expectedCode);
     }
 
 }

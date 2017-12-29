@@ -61,9 +61,9 @@ public class RepresentsSubClassesAnnotation {
         });
         String nestedUnder = this.getNestedUnder();
         if (nestedUnder.isEmpty()) {
-            builder.addStatement("json.putAll(subClassProperties)");
+            builder.addStatement("$N.putAll(subClassProperties)", MapperJavaSourceFile.JSON_OBJECT_VAR_NAME);
         } else {
-            builder.addStatement("json.put($S, subClassProperties)", nestedUnder);
+            builder.addStatement("$N.put($S, subClassProperties)", MapperJavaSourceFile.JSON_OBJECT_VAR_NAME, nestedUnder);
         }
         return builder.build();
     }
@@ -72,20 +72,18 @@ public class RepresentsSubClassesAnnotation {
         CodeBlock.Builder builder = CodeBlock.builder();
 
         builder.addStatement("$T model = null", representerAnnotation.getModelClass());
-        //Enhancement: get the right type instead of String.class?
-        builder.addStatement("$T $N = ($T) json.get($S)", String.class, this.getProperty(), String.class, this.getProperty());
+
+        //TODO: Enhancement: get the right type instead of String.class?
+        builder.addStatement("$T $N = ($T) $N.get($S)", String.class, getProperty(), String.class, MapperJavaSourceFile.JSON_OBJECT_VAR_NAME, getProperty());
 
         IfElseBuilder ifElseBuilder = new IfElseBuilder(builder);
 
-        this.getSubClassInfos().forEach(subType -> {
-            ifElseBuilder
-                    .addIf("$S.equals($N)", subType.getValue(), this.getProperty())
-                    .withBody(modelFromSubClass(context, subType));
-
-        });
+        getSubClassInfos().forEach(subType -> ifElseBuilder
+                .addIf("$S.equals($N)", subType.getValue(), getProperty())
+                .withBody(modelFromSubClass(context, subType)));
         ifElseBuilder
                 .addElse("throw new $T($S)", RuntimeException.class,
-                        String.format("Could not find any subclass for specified %s. Possible values are: %s", this.getProperty(),
+                        String.format("Could not find any subclass for specified %s. Possible values are: %s", getProperty(),
                                 getAllPossiblePropertyValues()));
         return builder.build();
     }
@@ -95,13 +93,14 @@ public class RepresentsSubClassesAnnotation {
         String nestedUnder = this.getNestedUnder();
         if (nestedUnder.isEmpty()) {
             return CodeBlock.builder()
-                    .addStatement("model = $T.fromJSON(json)", subTypeRepresenterAnnotation.mapperClassImplRelocated())
+                    .addStatement("model = $T.fromJSON($N)", subTypeRepresenterAnnotation.mapperClassImplRelocated(), MapperJavaSourceFile.JSON_OBJECT_VAR_NAME)
                     .build();
         } else {
             return CodeBlock.builder()
-                    .addStatement("model = $T.fromJSON(($T) json.get($S))",
+                    .addStatement("model = $T.fromJSON(($T) $N.get($S))",
                             subTypeRepresenterAnnotation.mapperClassImplRelocated(),
                             Map.class,
+                            MapperJavaSourceFile.JSON_OBJECT_VAR_NAME,
                             nestedUnder)
                     .build();
         }

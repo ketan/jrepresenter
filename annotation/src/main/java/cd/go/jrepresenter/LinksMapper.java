@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 public class LinksMapper {
-    public static <T> Map toJSON(LinksProvider<T> linksProvider, T model, RequestContext requestContext) {
+    public static <T> Map<String, Object> toJSON(LinksProvider<T> linksProvider, T model, RequestContext requestContext) {
         List<Link> links = linksProvider.getLinks(model, requestContext);
         if (links.isEmpty()) {
             return Collections.emptyMap();
         } else {
-            LinkedHashMap<String, Object> linksMap = new LinkedHashMap<>();
+            Map<String, Object> linksMap = new LinkedHashMap<>();
             links.forEach(link -> linksMap.put(link.getName(), Collections.singletonMap("href", link.getHref())));
             return Collections.singletonMap("_links", linksMap);
         }

@@ -42,10 +42,10 @@ public class SubClassInfoAnnotation {
     }
 
     public CodeBlock getSerializeCodeBlock(RepresenterAnnotation subClassRepresenterAnnotation) {
-        CodeBlock.Builder builder = CodeBlock.builder();
         ClassName subClassModel = subClassRepresenterAnnotation.getModelClass();
+        CodeBlock.Builder builder = CodeBlock.builder();
         if (this.hasLinksProvider()) {
-            builder.addStatement("json.putAll($T.toJSON(new $T(), ($T) value, requestContext))", LinksMapper.class, linksProvider, subClassModel);
+            builder.addStatement("$N.putAll($T.toJSON(new $T(), ($T) value, requestContext))", MapperJavaSourceFile.JSON_OBJECT_VAR_NAME, LinksMapper.class, linksProvider, subClassModel);
         }
         return builder
                 .addStatement("subClassProperties = $T.toJSON(($T) value, requestContext)", subClassRepresenterAnnotation.mapperClassImplRelocated(), subClassModel)

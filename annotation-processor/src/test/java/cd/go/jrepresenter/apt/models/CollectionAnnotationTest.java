@@ -18,26 +18,27 @@ package cd.go.jrepresenter.apt.models;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.ParameterizedTypeName;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static cd.go.jrepresenter.apt.models.TestConstants.USER_MODEL;
+import static cd.go.jrepresenter.apt.models.TestConstants.USER_REPRESENTER_CLASS;
+import static cd.go.jrepresenter.apt.util.TypeUtil.listOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerialize() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), null, false, false);
-        Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withRepresenterClassName(ClassName.bestGuess("com.foo.representers.UserRepresenter"))
+                .withRepresenterClassName(USER_REPRESENTER_CLASS)
                 .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
@@ -45,19 +46,19 @@ public class CollectionAnnotationTest {
 
         CodeBlock codeBlock = annotation.getSerializeCodeBlock(context, "json");
 
-        String expectedCode = "json.put(\"users\", gen.com.foo.representers.UserMapper.toJSON(value.getUsersInternal(), requestContext));\n";
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
+        String expectedCode = "json.put(\"users\", gen.com.tw.UserMapper.toJSON(value.getUsersInternal(), requestContext));\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToDeserialize() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), null, false, false);
-        Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
-        Attribute jsonAttribute = new Attribute("users", ParameterizedTypeName.get(List.class, Map.class));
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
+        Attribute jsonAttribute = new Attribute("users", listOf(Map.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withRepresenterClassName(ClassName.bestGuess("com.foo.representers.UserRepresenter"))
+                .withRepresenterClassName(USER_REPRESENTER_CLASS)
                 .build();
 
         ClassToAnnotationMap context = new ClassToAnnotationMap();
@@ -67,17 +68,54 @@ public class CollectionAnnotationTest {
         CodeBlock codeBlock = annotation.doGetDeserializeCodeBlock(context);
 
         String expectedCode = "" +
-                "if (json.containsKey(\"users\")) {\n" +
-                "  model.setUsersInternal(gen.com.foo.representers.UserMapper.fromJSON((java.util.List<java.util.Map>) json.get(\"users\")));\n" +
+                "if (jsonObject.containsKey(\"users\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"users\");\n" +
+                "  if (!(jsonAttribute instanceof java.util.List)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"users\", java.util.List.class, jsonObject);\n" +
+                "  }\n" +
+                "  java.util.List deserializedJsonAttribute = (java.util.List) jsonAttribute;\n" +
+                "  java.util.List<java.util.List<com.tw.User>> modelAttribute = gen.com.tw.UserMapper.fromJSON((java.util.List) deserializedJsonAttribute);\n" +
+                "  model.setUsersInternal(modelAttribute);\n" +
                 "}\n";
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
-    @Ignore
+    public void shouldGenerateCodeToDeserializeUsingDeserializer() {
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
+        Attribute jsonAttribute = new Attribute("users", listOf(Map.class));
+        CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .withDeserializerClassName(ClassName.bestGuess("com.tw.deserializers.UserDeserializer"))
+                .withRepresenterClassName(USER_REPRESENTER_CLASS)
+                .build();
+
+        ClassToAnnotationMap context = new ClassToAnnotationMap();
+        context.add(representerAnnotation);
+        context.addAnnotatedMethod("com.foo.representers.UserRepresenter", annotation);
+
+        CodeBlock codeBlock = annotation.doGetDeserializeCodeBlock(context);
+
+        String expectedCode = "" +
+                "if (jsonObject.containsKey(\"users\")) {\n" +
+                "  java.lang.Object jsonAttribute = jsonObject.get(\"users\");\n" +
+                "  if (!(jsonAttribute instanceof java.util.List)) {\n" +
+                "    cd.go.jrepresenter.JsonParseException.throwBadJsonType(\"users\", java.util.List.class, jsonObject);\n" +
+                "  }\n" +
+                "  java.util.List deserializedJsonAttribute = ((java.util.List<java.util.Map>) (jsonAttribute)).stream().map(gen.cd.go.jrepresenter.Constants.Deserializers.USER::apply).collect(java.util.stream.Collectors.toList());\n" +
+                "  java.util.List<java.util.List<com.tw.User>> modelAttribute = gen.com.tw.UserMapper.fromJSON((java.util.List) deserializedJsonAttribute);\n" +
+                "  model.setUsersInternal(modelAttribute);\n" +
+                "}\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
+
+    }
+
+    @Test
     public void shouldGenerateCodeToSerializeWithTargetWithSerializer() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), null, false, false);
-        Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                 .withModelAttribute(modelAttribute)
@@ -91,19 +129,19 @@ public class CollectionAnnotationTest {
 
         CodeBlock codeBlock = annotation.getSerializeCodeBlock(context, "json");
 
-        String expectedCode = "json.put(\"users\", com.foo.representers.gen.UserMapper.toJSON((java.util.List) value.getUsersInternal(), requestContext));\n";
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
+        String expectedCode = "json.put(\"users\", (value.getUsersInternal()).stream().map(gen.cd.go.jrepresenter.Constants.Serializers.USER::apply).collect(java.util.stream.Collectors.toList()));\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetter() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), null, false, false);
-        Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                 .withModelAttribute(modelAttribute)
                 .withJsonAttribute(jsonAttribute)
-                .withGetterClassName(ClassName.bestGuess("com.foo.UsersGetter"))
+                .withGetterClassName(ClassName.bestGuess("com.tw.UsersGetter"))
                 .build();
 
         ClassToAnnotationMap context = new ClassToAnnotationMap();
@@ -112,14 +150,14 @@ public class CollectionAnnotationTest {
 
         CodeBlock codeBlock = annotation.getSerializeCodeBlock(context, "json");
 
-        String expectedCode = "json.put(\"users\", new com.foo.UsersGetter().apply(value));\n";
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
+        String expectedCode = "json.put(\"users\", gen.cd.go.jrepresenter.Constants.Getters.USERS.apply(value));\n";
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetterAndSerializer() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.UserRepresenter"), ClassName.bestGuess("com.foo.User"), null, false, false);
-        Attribute modelAttribute = new Attribute("usersInternal", ParameterizedTypeName.get(ClassName.get(List.class), ClassName.bestGuess("com.foo.User")));
+        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+        Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
                 .withModelAttribute(modelAttribute)
@@ -133,6 +171,6 @@ public class CollectionAnnotationTest {
         CodeBlock codeBlock = annotation.getSerializeCodeBlock(context, "json");
 
         String expectedCode = "json.put(\"users\", value.getUsersInternal());\n";
-        assertThat(codeBlock.toString()).isEqualToNormalizingNewlines(expectedCode);
+        assertThat(codeBlock.toString()).isEqualTo(expectedCode);
     }
 }

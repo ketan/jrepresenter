@@ -21,6 +21,7 @@ import cd.go.jrepresenter.annotations.Collection;
 import cd.go.jrepresenter.annotations.Property;
 import cd.go.jrepresenter.annotations.Represents;
 import cd.go.jrepresenter.examples.CaseInsensitiveString;
+import cd.go.jrepresenter.examples.Pipeline;
 import cd.go.jrepresenter.examples.PipelineGroup;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringDeserializer;
 import cd.go.jrepresenter.examples.serializers.CaseInsensitiveStringSerializer;
@@ -34,7 +35,7 @@ public interface PipelineGroupRepresenter {
     @Property(serializer = CaseInsensitiveStringSerializer.class, deserializer = CaseInsensitiveStringDeserializer.class, modelAttributeType = CaseInsensitiveString.class)
     public String name();
 
-    @Collection(representer = PipelineRepresenter.class, embedded = true)
+    @Collection(representer = PipelineRepresenter.class, embedded = true, modelAttributeType = Pipeline.class)
     public List<Map> pipelines();
 
 }

@@ -19,15 +19,19 @@ package cd.go.jrepresenter.apt.models;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class ClassToAnnotationMap {
     private Map<RepresenterAnnotation, List<BaseAnnotation>> classToAnnotationMap = new LinkedHashMap<>();
+    private Set<TypeName> serializers = new LinkedHashSet<>();
+    private Set<TypeName> deserializers = new LinkedHashSet<>();
+
+    private Set<TypeName> getters = new LinkedHashSet<>();
+    private Set<TypeName> setters = new LinkedHashSet<>();
+    private Set<TypeName> skipParses = new LinkedHashSet<>();
+    private Set<TypeName> skipRenders = new LinkedHashSet<>();
 
     public void add(RepresenterAnnotation representerAnnotation) {
         if (!classToAnnotationMap.containsKey(representerAnnotation)) {
@@ -47,11 +51,27 @@ public class ClassToAnnotationMap {
         addAnnotatedMethod(ClassName.bestGuess(representerClass), propertyAnnotation);
     }
 
-    public void addAnnotatedMethod(TypeName representerClass, BaseAnnotation propertyAnnotation) {
+    public void addAnnotatedMethod(TypeName representerClass, BaseAnnotation annotation) {
+        if (annotation.hasSerializer()) {
+            serializers.add(annotation.serializerClassName);
+        }
+        if (annotation.hasDeserializer()) {
+            deserializers.add(annotation.deserializerClassName);
+        }
+        if (annotation.hasGetterClass()) {
+            getters.add(annotation.getterClassName);
+        }
+        if (annotation.hasSetterClass()) {
+            setters.add(annotation.setterClassName);
+        }
+
+        skipParses.add(annotation.skipParse);
+        skipRenders.add(annotation.skipRender);
+
         classToAnnotationMap.forEach((representerAnnotation, baseAnnotations) -> {
             if (representerAnnotation.getRepresenterClass().equals(representerClass)) {
-                propertyAnnotation.setParent(representerAnnotation);
-                baseAnnotations.add(propertyAnnotation);
+                annotation.setParent(representerAnnotation);
+                baseAnnotations.add(annotation);
             }
         });
     }
@@ -66,5 +86,33 @@ public class ClassToAnnotationMap {
 
     public List<BaseAnnotation> getAnnotationsOn(RepresenterAnnotation representerAnnotation) {
         return classToAnnotationMap.get(representerAnnotation);
+    }
+
+    public Set<TypeName> serializers() {
+        return serializers;
+    }
+
+    public Set<TypeName> deserializers() {
+        return deserializers;
+    }
+
+    public Set<TypeName> getters() {
+        return getters;
+    }
+
+    public Set<TypeName> setters() {
+        return setters;
+    }
+
+    public Set<TypeName> skipParses() {
+        return skipParses;
+    }
+
+    public Set<TypeName> skipRenders() {
+        return skipRenders;
+    }
+
+    public boolean isEmpty() {
+        return classToAnnotationMap.isEmpty();
     }
 }

@@ -27,56 +27,40 @@ public class PropertyAnnotation extends BaseAnnotation {
                 getterClassName, setterClassName, skipParse, skipRender);
     }
 
-    @Override
-    protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap classToAnnotationMap, String jsonVariableName) {
-        return putInJson(jsonVariableName,
-                applyRenderRepresenter(classToAnnotationMap,
-                        applySerializer(
-                                applyGetter())));
-    }
 
-    private CodeBlock applySerializer(CodeBlock valueFromGetter) {
+    @Override
+    protected CodeBlock applySerializer(CodeBlock valueFromGetter) {
         if (hasSerializer()) {
-            CodeBlock.Builder builder = CodeBlock.builder();
-            builder.add("new $T().apply(", serializerClassName)
+            return CodeBlock.builder()
+                    .add("$T.apply(", MapperJavaConstantsFile.SERIALIZE_BUILDER.fieldName(serializerClassName))
                     .add(valueFromGetter)
-                    .add(")");
-            return builder.build();
+                    .add(")")
+                    .build();
         } else {
             return valueFromGetter;
         }
     }
 
     @Override
-    public CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap context) {
-        CodeBlock deserializeCodeBlock = applySetter(
-                applyParseRepresenter(context,
-                        applyDeserializer(
-                                getValueFromJson())));
-        return CodeBlock.builder()
-                .beginControlFlow("if (json.containsKey($S))", jsonAttribute.nameAsSnakeCase())
-                .add("$[")
-                .add(deserializeCodeBlock)
-                .add(";\n$]")
-                .endControlFlow()
-                .build();
-    }
+    protected CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+        CodeBlock.Builder builder = CodeBlock.builder()
+                .add(valueFromJson);
 
-    private CodeBlock getValueFromJson() {
-        return CodeBlock.builder()
-                .add("($T) json.get($S)", jsonAttribute.type, jsonAttribute.nameAsSnakeCase())
-                .build();
-    }
-
-    private CodeBlock applyDeserializer(CodeBlock valueFromJson) {
         if (hasDeserializer()) {
-            return CodeBlock.builder()
-                    .add("new $T().apply(", deserializerClassName)
-                    .add(valueFromJson)
-                    .add(")")
-                    .build();
+            builder.addStatement(
+                    "$T $N = $T.apply(($T) jsonAttribute)",
+                    modelAttribute.type,
+                    MapperJavaSourceFile.DESERIALIZED_JSON_ATTRIBUTE_NAME,
+                    MapperJavaConstantsFile.DESERIALIZER_BUILDER.fieldName(deserializerClassName),
+                    jsonAttribute.type);
         } else {
-            return valueFromJson;
+            builder.addStatement(
+                    "$T $N = ($T) jsonAttribute",
+                    modelAttribute.type,
+                    MapperJavaSourceFile.DESERIALIZED_JSON_ATTRIBUTE_NAME,
+                    jsonAttribute.type);
         }
+
+        return builder.build();
     }
 }

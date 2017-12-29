@@ -16,22 +16,30 @@
 
 package cd.go.jrepresenter.apt.models;
 
-import cd.go.jrepresenter.util.FalseFunction;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
+import static cd.go.jrepresenter.apt.models.TestConstants.STRING_CLASS;
 
 public class BaseAnnotationTest {
 
     @Test
     public void shouldRenderCodeBlockAsIsIfSkipParseAndRenderAreFalse() {
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
         BaseAnnotation baseAnnotation = BaseAnnotationBuilder.aBaseAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
                 .withSkipParse(BaseAnnotation.FALSE_FUNCTION)
                 .withSkipRender(BaseAnnotation.FALSE_FUNCTION)
                 .build();
-        Assertions.assertThat(baseAnnotation.getSerializeCodeBlock(null, null).toString()).isEqualToNormalizingNewlines("//todo serialize;\n");
-        Assertions.assertThat(baseAnnotation.getDeserializeCodeBlock(null).toString()).isEqualToNormalizingNewlines("//todo deserialize;\n");
+        Assertions.assertThat(baseAnnotation.getSerializeCodeBlock(null, "jsonObject").toString()).isEqualTo("jsonObject.put(\"first_name\", /* apply some serializer here */);\n");
+        Assertions.assertThat(baseAnnotation.getDeserializeCodeBlock(null).toString()).isEqualTo("" +
+                "if (jsonObject.containsKey(\"first_name\")) {\n" +
+                "  /* apply some deserializer here */java.lang.String modelAttribute = (java.lang.String) deserializedJsonAttribute;\n" +
+                "  model.setFname(modelAttribute);\n" +
+                "}\n");
     }
 
     @Test
@@ -47,19 +55,27 @@ public class BaseAnnotationTest {
 
     @Test
     public void shouldRenderConditionalIfSkipParseAndRenderAreSetToAnyOtherFunction() {
+        Attribute modelAttribute = new Attribute("fname", STRING_CLASS);
+        Attribute jsonAttribute = new Attribute("firstName", STRING_CLASS);
+
         BaseAnnotation baseAnnotation = BaseAnnotationBuilder.aBaseAnnotation()
-                .withSkipParse(ClassName.bestGuess("com.tw.SkipParse"))
-                .withSkipRender(ClassName.bestGuess("com.tw.SkipRender"))
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .withSkipParse(ClassName.bestGuess("com.tw.SkipFooParse"))
+                .withSkipRender(ClassName.bestGuess("com.tw.SkipFooRender"))
                 .build();
 
-        Assertions.assertThat(baseAnnotation.getSerializeCodeBlock(null, null).toString()).isEqualToNormalizingNewlines("" +
-                "if (new com.tw.SkipRender().apply(value)) {\n" +
-                "  //todo serialize;\n" +
+        Assertions.assertThat(baseAnnotation.getSerializeCodeBlock(null, "jsonObject").toString()).isEqualTo("" +
+                "if (!gen.cd.go.jrepresenter.Constants.SkipRenderers.SKIP_FOO_RENDER.apply(value)) {\n" +
+                "  jsonObject.put(\"first_name\", /* apply some serializer here */);\n" +
                 "}\n");
 
-        Assertions.assertThat(baseAnnotation.getDeserializeCodeBlock(null).toString()).isEqualToNormalizingNewlines("" +
-                "if (new com.tw.SkipParse().apply(value)) {\n" +
-                "  //todo deserialize;\n" +
+        Assertions.assertThat(baseAnnotation.getDeserializeCodeBlock(null).toString()).isEqualTo("" +
+                "if (!gen.cd.go.jrepresenter.Constants.SkipParsers.SKIP_FOO_PARSE.apply(value)) {\n" +
+                "  if (jsonObject.containsKey(\"first_name\")) {\n" +
+                "    /* apply some deserializer here */java.lang.String modelAttribute = (java.lang.String) deserializedJsonAttribute;\n" +
+                "    model.setFname(modelAttribute);\n" +
+                "  }\n" +
                 "}\n");
     }
 }

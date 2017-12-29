@@ -14,7 +14,31 @@
  * limitations under the License.
  */
 
+configurations {
+  apt
+}
+
 dependencies {
   compile project(':annotation')
-  compile project(':annotation-processor')
+  apt project(':annotation-processor')
+}
+
+def generatedSrcOutput = file('gen')
+
+sourceSets {
+  main {
+    java {
+      srcDirs += generatedSrcOutput
+    }
+  }
+}
+
+clean {
+  delete generatedSrcOutput
+}
+
+compileJava {
+  options.compilerArgs += '-AjrepresenterDebug=true'
+  options.annotationProcessorGeneratedSourcesDirectory = generatedSrcOutput
+  options.annotationProcessorPath = configurations.apt
 }

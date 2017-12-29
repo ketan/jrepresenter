@@ -96,14 +96,15 @@ public final class BaseAnnotationBuilder {
 
     public BaseAnnotation build() {
         BaseAnnotation baseAnnotation = new BaseAnnotation(modelAttribute, jsonAttribute, representerClassName, serializerClassName, deserializerClassName, getterClassName, setterClassName, skipParse, skipRender) {
+
             @Override
-            protected CodeBlock doSetSerializeCodeBlock(ClassToAnnotationMap classToAnnotationMap, String jsonVariableName) {
-                return CodeBlock.builder().addStatement("//todo serialize").build();
+            protected CodeBlock applySerializer(CodeBlock getterCodeBlock) {
+                return CodeBlock.builder().add("/* apply some serializer here */").build();
             }
 
             @Override
-            protected CodeBlock doGetDeserializeCodeBlock(ClassToAnnotationMap classToAnnotationMap) {
-                return CodeBlock.builder().addStatement("//todo deserialize").build();
+            protected CodeBlock applyDeserializer(CodeBlock valueFromJson) {
+                return CodeBlock.builder().add("/* apply some deserializer here */").build();
             }
         };
         baseAnnotation.setParent(parent);
