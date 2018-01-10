@@ -219,6 +219,9 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class UserMapper {\n" +
                 "  public static User fromJSON(Map jsonObject) {\n" +
+                "    if (jsonObject == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    User model = new User();\n" +
                 "    if (jsonObject.containsKey(\"first_name\")) {\n" +
                 "      Object jsonAttribute = jsonObject.get(\"first_name\");\n" +
@@ -233,6 +236,9 @@ public class MapperJavaSourceFileTest {
                 "  }\n" +
                 "\n" +
                 "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
+                "    if (jsonArray == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");

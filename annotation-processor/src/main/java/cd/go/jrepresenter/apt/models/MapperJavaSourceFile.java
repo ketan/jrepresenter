@@ -38,6 +38,7 @@ public class MapperJavaSourceFile {
     public static final String EMBEDDED_MAP_VARIABLE_NAME = "embeddedMap";
     public static final String DESERIALIZED_JSON_ATTRIBUTE_NAME = "deserializedJsonAttribute";
     public static final String LINKS_PROVIDER_CONST_NAME = "LINKS_PROVIDER";
+    public static final String JSON_ARRAY_VAR_NAME = "jsonArray";
 
     public final RepresenterAnnotation representerAnnotation;
     private final ClassToAnnotationMap context;
@@ -98,11 +99,12 @@ public class MapperJavaSourceFile {
         ParameterizedTypeName listOfModels = TypeUtil.listOf(representerAnnotation.getModelClass());
         return MethodSpec.methodBuilder("fromJSON")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .addParameter(listOfMaps, "jsonArray")
+                .addParameter(listOfMaps, JSON_ARRAY_VAR_NAME)
                 .returns(listOfModels)
                 .addCode(
                         CodeBlock.builder()
-                                .addStatement("return jsonArray.stream().map(eachItem -> $T.fromJSON(eachItem)).collect($T.toList())", representerAnnotation.mapperClassImplRelocated(), Collectors.class)
+                                .add(maybeReturnEarly(JSON_ARRAY_VAR_NAME))
+                                .addStatement("return $N.stream().map(eachItem -> $T.fromJSON(eachItem)).collect($T.toList())", JSON_ARRAY_VAR_NAME, representerAnnotation.mapperClassImplRelocated(), Collectors.class)
                                 .build()
                 )
                 .build();
@@ -134,11 +136,20 @@ public class MapperJavaSourceFile {
                 .returns(representerAnnotation.getModelClass())
                 .addCode(
                         CodeBlock.builder()
+                                .add(maybeReturnEarly(JSON_OBJECT_VAR_NAME))
                                 .add(createNewModelObject())
                                 .add(deserializeInternal())
                                 .addStatement("return model")
                                 .build()
                 )
+                .build();
+    }
+
+    private CodeBlock maybeReturnEarly(String jsonObjectVarName) {
+        return CodeBlock.builder()
+                .beginControlFlow("if ($N == null)", jsonObjectVarName)
+                .addStatement("return null")
+                .endControlFlow()
                 .build();
     }
 
