@@ -26,7 +26,13 @@ public class MapperJavaConstantsFileTest {
 
     @Test
     public void shouldGenerateAConstantsFile() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, true);
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
 
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
                 .withSerializerClassName(CASE_INSENSITIVE_STRING_SERIALIZER)

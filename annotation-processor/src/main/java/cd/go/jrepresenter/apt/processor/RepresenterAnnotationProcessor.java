@@ -71,11 +71,20 @@ public class RepresenterAnnotationProcessor extends AbstractProcessor {
             Represents represents = representerClass.getAnnotation(Represents.class);
             ClassName modelClassName = (ClassName) getClassNameFromAnnotationMethod(represents, "value");
             ClassName linksBuilderClassName = (ClassName) getClassNameFromAnnotationMethod(represents, "linksProvider");
+            ClassName deserializerClassName = (ClassName) getClassNameFromAnnotationMethod(represents, "deserializer");
             ClassName representerClassName = ClassName.bestGuess(((TypeElement) representerClass).getQualifiedName().toString());
             RepresentsSubClasses annotation = representerClass.getAnnotation(RepresentsSubClasses.class);
             Optional<RepresentsSubClassesAnnotation> representsSubClassesAnnotation = extractSubClassInfo(annotation);
 
-            classToAnnotationMap.add(new RepresenterAnnotation(representerClassName, modelClassName, linksBuilderClassName, represents.skipSerialize(), represents.skipDeserialize(), representsSubClassesAnnotation));
+            classToAnnotationMap.add(RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                    .withRepresenterClass(representerClassName)
+                    .withModelClass(modelClassName)
+                    .withLinksProviderClass(linksBuilderClassName)
+                    .withSkipDeserialize(represents.skipDeserialize())
+                    .withSkipSerialize(represents.skipSerialize())
+                    .withSubClassInfo(representsSubClassesAnnotation)
+                    .withDeserializerClass(deserializerClassName)
+                    .build());
         });
 
         roundEnv.getElementsAnnotatedWith(Property.class).forEach(method -> {

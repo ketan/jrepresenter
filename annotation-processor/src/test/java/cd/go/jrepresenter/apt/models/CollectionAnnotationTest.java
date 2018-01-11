@@ -32,7 +32,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerialize() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
@@ -52,7 +59,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToDeserialize() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", listOf(Map.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
@@ -82,7 +96,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToDeserializeUsingDeserializer() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", listOf(Map.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
@@ -114,7 +135,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithSerializer() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
@@ -135,7 +163,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetter() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()
@@ -156,7 +191,14 @@ public class CollectionAnnotationTest {
 
     @Test
     public void shouldGenerateCodeToSerializeWithTargetWithGetterAndSerializer() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(USER_REPRESENTER_CLASS, USER_MODEL, null, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         Attribute modelAttribute = new Attribute("usersInternal", listOf(USER_MODEL));
         Attribute jsonAttribute = new Attribute("users", ClassName.get(List.class));
         CollectionAnnotation annotation = CollectionAnnotationBuilder.aCollectionAnnotation()

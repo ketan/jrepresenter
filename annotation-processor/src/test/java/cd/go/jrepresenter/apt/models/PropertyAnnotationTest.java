@@ -124,7 +124,14 @@ public class PropertyAnnotationTest {
     public void shouldGenerateCodeToSerializePropertyUsingRepresenter() {
         Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
         Attribute jsonAttribute = new Attribute("user", null);
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
 
@@ -142,7 +149,14 @@ public class PropertyAnnotationTest {
     public void shouldGenerateCodeToDeserializePropertyUsingRepresenter() {
         Attribute modelAttribute = new Attribute("triggeredBy", USER_MODEL);
         Attribute jsonAttribute = new Attribute("user", ClassName.get(Map.class));
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         ClassToAnnotationMap context = new ClassToAnnotationMap();
         context.add(representerAnnotation);
 

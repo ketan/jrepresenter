@@ -39,10 +39,31 @@ public class RepresentsSubClassesAnnotationTest {
     @Before
     public void setUp() throws Exception {
         context = new ClassToAnnotationMap();
-        userRepresenterAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, TestConstants.USER_MODEL, null, false, false);
+
+        userRepresenterAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(TestConstants.USER_MODEL)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
         context.add(userRepresenterAnnotation);
-        context.add(new RepresenterAnnotation(guestUserRepresenterClass, guestUserClass, null, false, false));
-        context.add(new RepresenterAnnotation(adminUserRepresenterClass, adminUserClass, null, false, false));
+
+        context.add(RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(guestUserRepresenterClass)
+                .withModelClass(guestUserClass)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build());
+
+        context.add(RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(adminUserRepresenterClass)
+                .withModelClass(adminUserClass)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build());
         guestSubClassInfo = new SubClassInfoAnnotation(guestUserRepresenterClass, "guest", null);
         adminSubClassInfo = new SubClassInfoAnnotation(adminUserRepresenterClass, "admin", null);
     }

@@ -18,9 +18,11 @@ package cd.go.jrepresenter.annotations;
 
 import cd.go.jrepresenter.EmptyLinksProvider;
 import cd.go.jrepresenter.LinksProvider;
+import cd.go.jrepresenter.util.NullFunction;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
+import java.util.function.Function;
 
 @Target(ElementType.TYPE)
 public @interface Represents {
@@ -32,4 +34,5 @@ public @interface Represents {
 
     boolean skipDeserialize() default false;
 
+    Class<? extends Function> deserializer() default NullFunction.class;
 }

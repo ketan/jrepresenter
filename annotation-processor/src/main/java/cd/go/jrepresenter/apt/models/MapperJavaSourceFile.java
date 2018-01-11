@@ -133,18 +133,25 @@ public class MapperJavaSourceFile {
     }
 
     private MethodSpec fromJsonMethod() {
+        CodeBlock methodBody;
+        if (representerAnnotation.hasDeserializerClass()) {
+            methodBody = CodeBlock.builder()
+                    .addStatement("return $T.fromJSON($N)", representerAnnotation.getDeserializerClass(), JSON_OBJECT_VAR_NAME)
+                    .build();
+        } else {
+            methodBody = CodeBlock.builder()
+                    .add(createNewModelObject())
+                    .add(maybeReturnEarly(JSON_OBJECT_VAR_NAME, "model"))
+                    .add(deserializeInternal())
+                    .addStatement("return model")
+                    .build();
+        }
+
         return MethodSpec.methodBuilder("fromJSON")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .addParameter(Map.class, JSON_OBJECT_VAR_NAME)
                 .returns(representerAnnotation.getModelClass())
-                .addCode(
-                        CodeBlock.builder()
-                                .add(createNewModelObject())
-                                .add(maybeReturnEarly(JSON_OBJECT_VAR_NAME, "model"))
-                                .add(deserializeInternal())
-                                .addStatement("return model")
-                                .build()
-                )
+                .addCode(methodBody)
                 .build();
     }
 

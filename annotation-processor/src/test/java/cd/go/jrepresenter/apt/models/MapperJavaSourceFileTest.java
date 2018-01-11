@@ -29,7 +29,13 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectProperties() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, true);
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
 
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
@@ -77,7 +83,14 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectPropertiesAsEmbedded() throws Exception {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, true);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
 
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
@@ -128,9 +141,22 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeComplexObjectPropertiesAsEmbedded() throws Exception {
-        RepresenterAnnotation backupRepresenterAnnotation = new RepresenterAnnotation(ClassName.bestGuess("com.foo.representers.BackupRepresenter"), ClassName.bestGuess("com.foo.Backup"), EMPTY_LINKS_PROVIDER, false, true);
 
-        RepresenterAnnotation userRepresenterAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, false);
+        RepresenterAnnotation backupRepresenterAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(ClassName.bestGuess("com.foo.representers.BackupRepresenter"))
+                .withModelClass(ClassName.bestGuess("com.foo.Backup"))
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
+
+        RepresenterAnnotation userRepresenterAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
 
 
         Attribute modelAttribute = new Attribute("backedUpBy", USER_MODEL);
@@ -185,7 +211,14 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSkipSerializeIfSpecified() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, true, false);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(true)
+                .build();
 
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
@@ -247,7 +280,14 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldGenerateALinksProviderConstantFieldAlongWithSerializationCode() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, ClassName.bestGuess("com.example.UserLinksProvider"), false, true);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(ClassName.bestGuess("com.example.UserLinksProvider"))
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
 
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
@@ -304,7 +344,14 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSkipDeserializeIfSpecified() {
-        RepresenterAnnotation representerAnnotation = new RepresenterAnnotation(TestConstants.USER_REPRESENTER_CLASS, USER_MODEL, EMPTY_LINKS_PROVIDER, false, true);
+
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withSkipDeserialize(true)
+                .withSkipSerialize(false)
+                .build();
 
         Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
         Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
@@ -346,6 +393,59 @@ public class MapperJavaSourceFileTest {
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    @Test
+    public void shouldGenerateCustomDeserializerIfDeserializerClassIsSpecified() {
+        RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
+                .withModelClass(USER_MODEL)
+                .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
+                .withDeserializerClass(ClassName.bestGuess("com.tw.CustomMapper"))
+                .withSkipSerialize(true)
+                .build();
+
+        Attribute modelAttribute = new Attribute("fname", TypeName.get(String.class));
+        Attribute jsonAttribute = new Attribute("firstName", TypeName.get(String.class));
+        PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
+                .withModelAttribute(modelAttribute)
+                .withJsonAttribute(jsonAttribute)
+                .build();
+        ClassToAnnotationMap context = new ClassToAnnotationMap();
+        context.add(representerAnnotation);
+        context.addAnnotatedMethod(TestConstants.USER_REPRESENTER_CLASS, propertyAnnotation);
+        MapperJavaSourceFile mapperJavaSourceFile = new MapperJavaSourceFile(representerAnnotation, context);
+
+        assertThat(mapperJavaSourceFile.toSource()).isEqualTo("" +
+                "//\n" +
+                "// This file was automatically generated by jrepresenter\n" +
+                "// Any changes may be lost!\n" +
+                "//\n" +
+                "package gen.com.tw;\n" +
+                "\n" +
+                "import com.tw.CustomMapper;\n" +
+                "import com.tw.User;\n" +
+                "import java.util.Collections;\n" +
+                "import java.util.List;\n" +
+                "import java.util.Map;\n" +
+                "import java.util.stream.Collectors;\n" +
+                "\n" +
+                "/**\n" +
+                " * Representer for {@link User}.\n" +
+                " * Generated using representer {@link com.tw.UserRepresenter}.\n" +
+                " */\n" +
+                "public class UserMapper {\n" +
+                "  public static User fromJSON(Map jsonObject) {\n" +
+                "    return CustomMapper.fromJSON(jsonObject);\n" +
+                "  }\n" +
+                "\n" +
+                "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
+                "    if (jsonArray == null) {\n" +
+                "      return Collections.emptyList();\n" +
+                "    }\n" +
+                "    return jsonArray.stream().map(eachItem -> UserMapper.fromJSON(eachItem)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
     }

@@ -35,7 +35,14 @@ public class SubClassInfoAnnotationTest {
         representerClass = ClassName.bestGuess("com.tw.GuestUserRepresenter");
         linksProvider = ClassName.bestGuess("com.tw.GuestUserLinksProvider");
         modelClass = ClassName.bestGuess("com.tw.GuestUser");
-        subClassRepresenterAnnotation = new RepresenterAnnotation(representerClass, modelClass, null, false, false);
+
+        subClassRepresenterAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
+                .withRepresenterClass(representerClass)
+                .withModelClass(modelClass)
+                .withLinksProviderClass(null)
+                .withSkipDeserialize(false)
+                .withSkipSerialize(false)
+                .build();
     }
 
     @Test
