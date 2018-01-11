@@ -32,10 +32,14 @@ public class ClassToAnnotationMap {
     private Set<TypeName> setters = new LinkedHashSet<>();
     private Set<TypeName> skipParses = new LinkedHashSet<>();
     private Set<TypeName> skipRenders = new LinkedHashSet<>();
+    private Set<TypeName> customRepresenters = new LinkedHashSet<>();
 
     public void add(RepresenterAnnotation representerAnnotation) {
         if (!classToAnnotationMap.containsKey(representerAnnotation)) {
             classToAnnotationMap.put(representerAnnotation, new ArrayList<>());
+            if (representerAnnotation.hasDeserializerClass()) {
+                customRepresenters.add(representerAnnotation.getDeserializerClass());
+            }
         }
     }
 
@@ -114,5 +118,9 @@ public class ClassToAnnotationMap {
 
     public boolean isEmpty() {
         return classToAnnotationMap.isEmpty();
+    }
+
+    public Set<TypeName> customRepresenters() {
+        return customRepresenters;
     }
 }

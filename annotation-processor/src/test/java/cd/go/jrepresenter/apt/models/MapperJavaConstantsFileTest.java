@@ -32,6 +32,7 @@ public class MapperJavaConstantsFileTest {
                 .withLinksProviderClass(EMPTY_LINKS_PROVIDER)
                 .withSkipDeserialize(true)
                 .withSkipSerialize(false)
+                .withDeserializerClass(ClassName.bestGuess("com.example.CustomMapper"))
                 .build();
 
         PropertyAnnotation propertyAnnotation = PropertyAnnotationBuilder.aPropertyAnnotation()
@@ -54,6 +55,7 @@ public class MapperJavaConstantsFileTest {
                 "//\n" +
                 "package gen.cd.go.jrepresenter;\n" +
                 "\n" +
+                "import com.example.CustomMapper;\n" +
                 "import com.tw.CaseInsensitiveStringDeserializer;\n" +
                 "import com.tw.CaseInsensitiveStringSerializer;\n" +
                 "import com.tw.FNameGetter;\n" +
@@ -84,6 +86,10 @@ public class MapperJavaConstantsFileTest {
                 "\n" +
                 "  interface SkipRenderers {\n" +
                 "    SkipFooRender SKIP_FOO_RENDER = new SkipFooRender();\n" +
+                "  }\n" +
+                "\n" +
+                "  interface ToJSONMappers {\n" +
+                "    CustomMapper CUSTOM = new CustomMapper();\n" +
                 "  }\n" +
                 "}\n");
     }

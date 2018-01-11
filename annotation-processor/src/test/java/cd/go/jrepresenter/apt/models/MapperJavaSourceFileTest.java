@@ -425,8 +425,8 @@ public class MapperJavaSourceFileTest {
                 "//\n" +
                 "package gen.com.tw;\n" +
                 "\n" +
-                "import com.tw.CustomMapper;\n" +
                 "import com.tw.User;\n" +
+                "import gen.cd.go.jrepresenter.Constants;\n" +
                 "import java.util.Collections;\n" +
                 "import java.util.List;\n" +
                 "import java.util.Map;\n" +
@@ -438,7 +438,7 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class UserMapper {\n" +
                 "  public static User fromJSON(Map jsonObject) {\n" +
-                "    return CustomMapper.fromJSON(jsonObject);\n" +
+                "    return Constants.ToJSONMappers.CUSTOM.apply(jsonObject);\n" +
                 "  }\n" +
                 "\n" +
                 "  public static List<User> fromJSON(List<Map> jsonArray) {\n" +
