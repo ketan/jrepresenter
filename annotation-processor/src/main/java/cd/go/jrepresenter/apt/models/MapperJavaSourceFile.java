@@ -23,6 +23,7 @@ import cd.go.jrepresenter.apt.util.TypeUtil;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,9 @@ public class MapperJavaSourceFile {
                 .returns(listOfModels)
                 .addCode(
                         CodeBlock.builder()
-                                .add(maybeReturnEarly(JSON_ARRAY_VAR_NAME))
+                                .beginControlFlow("if ($N == null)", JSON_ARRAY_VAR_NAME)
+                                .addStatement("return $T.emptyList()", Collections.class)
+                                .endControlFlow()
                                 .addStatement("return $N.stream().map(eachItem -> $T.fromJSON(eachItem)).collect($T.toList())", JSON_ARRAY_VAR_NAME, representerAnnotation.mapperClassImplRelocated(), Collectors.class)
                                 .build()
                 )
@@ -136,8 +139,8 @@ public class MapperJavaSourceFile {
                 .returns(representerAnnotation.getModelClass())
                 .addCode(
                         CodeBlock.builder()
-                                .add(maybeReturnEarly(JSON_OBJECT_VAR_NAME))
                                 .add(createNewModelObject())
+                                .add(maybeReturnEarly(JSON_OBJECT_VAR_NAME, "model"))
                                 .add(deserializeInternal())
                                 .addStatement("return model")
                                 .build()
@@ -145,10 +148,10 @@ public class MapperJavaSourceFile {
                 .build();
     }
 
-    private CodeBlock maybeReturnEarly(String jsonObjectVarName) {
+    private CodeBlock maybeReturnEarly(String jsonObjectVarName, String model) {
         return CodeBlock.builder()
                 .beginControlFlow("if ($N == null)", jsonObjectVarName)
-                .addStatement("return null")
+                .addStatement("return $N", model)
                 .endControlFlow()
                 .build();
     }
