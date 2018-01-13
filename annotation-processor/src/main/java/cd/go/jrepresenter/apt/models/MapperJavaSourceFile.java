@@ -88,6 +88,7 @@ public class MapperJavaSourceFile {
                 .returns(List.class)
                 .addCode(
                         CodeBlock.builder()
+                                .add(maybeReturnEarlyIfNull("values"))
                                 .addStatement("return values.stream().map(eachItem -> $T.toJSON(eachItem, requestContext)).collect($T.toList())", representerAnnotation.mapperClassImplRelocated(), Collectors.class)
                                 .build()
                 )
@@ -115,6 +116,7 @@ public class MapperJavaSourceFile {
     }
 
     private MethodSpec toJsonMethod() {
+        maybeReturnEarlyIfNull("value");
         return MethodSpec.methodBuilder("toJSON")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .addParameter(representerAnnotation.getModelClass(), "value")
@@ -122,6 +124,7 @@ public class MapperJavaSourceFile {
                 .returns(MAP_OF_STRING_TO_OBJECT)
                 .addCode(
                         CodeBlock.builder()
+                                .add(maybeReturnEarlyIfNull("value"))
                                 .addStatement("$T $N = new $T()", MAP_OF_STRING_TO_OBJECT, JSON_OBJECT_VAR_NAME, LINKED_HASH_MAP_OF_STRING_TO_OBJECT)
                                 .add(serializeInternal())
                                 .add(serializeForSubClasses())
@@ -130,6 +133,14 @@ public class MapperJavaSourceFile {
                 )
                 .build();
 
+    }
+
+    private CodeBlock maybeReturnEarlyIfNull(String variableName) {
+        return CodeBlock.builder()
+                .beginControlFlow("if ($N == null)", variableName)
+                .addStatement("return null")
+                .endControlFlow()
+                .build();
     }
 
     private MethodSpec fromJsonMethod() {

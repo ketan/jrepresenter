@@ -70,12 +70,18 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class UserMapper {\n" +
                 "  public static Map<String, Object> toJSON(User value, RequestContext requestContext) {\n" +
+                "    if (value == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    Map<String, Object> jsonObject = new LinkedHashMap<String, Object>();\n" +
                 "    jsonObject.put(\"first_name\", value.getFname());\n" +
                 "    return jsonObject;\n" +
                 "  }\n" +
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
+                "    if (values == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
@@ -83,7 +89,6 @@ public class MapperJavaSourceFileTest {
 
     @Test
     public void shouldSerializeSimpleObjectPropertiesAsEmbedded() throws Exception {
-
         RepresenterAnnotation representerAnnotation = RepresenterAnnotationBuilder.aRepresenterAnnotation()
                 .withRepresenterClass(TestConstants.USER_REPRESENTER_CLASS)
                 .withModelClass(USER_MODEL)
@@ -126,6 +131,9 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class UserMapper {\n" +
                 "  public static Map<String, Object> toJSON(User value, RequestContext requestContext) {\n" +
+                "    if (value == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    Map<String, Object> jsonObject = new LinkedHashMap<String, Object>();\n" +
                 "    Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();\n" +
                 "    embeddedMap.put(\"first_name\", value.getFname());\n" +
@@ -134,6 +142,9 @@ public class MapperJavaSourceFileTest {
                 "  }\n" +
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
+                "    if (values == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
@@ -196,6 +207,9 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class BackupMapper {\n" +
                 "  public static Map<String, Object> toJSON(Backup value, RequestContext requestContext) {\n" +
+                "    if (value == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    Map<String, Object> jsonObject = new LinkedHashMap<String, Object>();\n" +
                 "    Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();\n" +
                 "    embeddedMap.put(\"user\", UserMapper.toJSON(value.getBackedUpBy(), requestContext));\n" +
@@ -204,6 +218,9 @@ public class MapperJavaSourceFileTest {
                 "  }\n" +
                 "\n" +
                 "  public static List toJSON(List<Backup> values, RequestContext requestContext) {\n" +
+                "    if (values == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return values.stream().map(eachItem -> BackupMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
@@ -328,6 +345,9 @@ public class MapperJavaSourceFileTest {
                 "  private static LinksProvider<User> LINKS_PROVIDER = new UserLinksProvider();\n" +
                 "\n" +
                 "  public static Map<String, Object> toJSON(User value, RequestContext requestContext) {\n" +
+                "    if (value == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    Map<String, Object> jsonObject = new LinkedHashMap<String, Object>();\n" +
                 "    jsonObject.putAll(LinksMapper.toJSON(LINKS_PROVIDER, value, requestContext));\n" +
                 "    Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();\n" +
@@ -337,6 +357,9 @@ public class MapperJavaSourceFileTest {
                 "  }\n" +
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
+                "    if (values == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
@@ -386,12 +409,18 @@ public class MapperJavaSourceFileTest {
                 " */\n" +
                 "public class UserMapper {\n" +
                 "  public static Map<String, Object> toJSON(User value, RequestContext requestContext) {\n" +
+                "    if (value == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    Map<String, Object> jsonObject = new LinkedHashMap<String, Object>();\n" +
                 "    jsonObject.put(\"first_name\", value.getFname());\n" +
                 "    return jsonObject;\n" +
                 "  }\n" +
                 "\n" +
                 "  public static List toJSON(List<User> values, RequestContext requestContext) {\n" +
+                "    if (values == null) {\n" +
+                "      return null;\n" +
+                "    }\n" +
                 "    return values.stream().map(eachItem -> UserMapper.toJSON(eachItem, requestContext)).collect(Collectors.toList());\n" +
                 "  }\n" +
                 "}\n");
